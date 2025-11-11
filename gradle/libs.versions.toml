@@ -29,7 +29,7 @@ slf4j = "2.0.17"
 flogger = "0.9"
 
 # API 文件版本
-springdoc = "2.8.10"
+springdoc = "2.8.13"
 
 # 工具庫版本
 jackson = "2.19.2"

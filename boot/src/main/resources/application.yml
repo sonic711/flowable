@@ -46,20 +46,3 @@ server:
   servlet:
     encoding:
       enabled: false
-
-#springdoc:
-#  api-docs:
-#    enabled: true # 預設的
-#    path: /api-docs # API 文件的路徑，預設的
-#  swagger-ui:
-#    enabled: true # 預設的
-#    path: /swagger-ui.html # Swagger UI 界面的路徑，預設的
-#  packages-to-scan: org.springframework.web,org.flowable
-#  paths-to-match:
-#    - /flowable-rest/**
-#    - /management/**
-#    - /runtime/**
-#    - /service/**
-#  paths-to-exclude:
-#    - /error
-#    - /actuator/**
