@@ -1,0 +1,82 @@
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
+        mavenLocal()
+        flatDir { dirs "${rootProject.projectDir}/libs" }
+    }
+    dependencies {
+        classpath(
+                // http://github.com/jeremylong/DependencyCheck
+                'org.owasp:dependency-check-gradle:10.0.2',
+                // https://plugins.gradle.org/plugin/org.sonarqube
+                'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:4.0.0.2929',
+                // https://plugins.gradle.org/plugin/com.github.spotbugs
+                'com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.14',
+                // https://plugins.gradle.org/plugin/io.spring.dependency-management
+                'io.spring.gradle:dependency-management-plugin:1.1.5',
+                // https://plugins.gradle.org/plugin/io.github.thakurvijendar.dependency-license-report
+                'com.github.jk1.dependency-license-report:com.github.jk1.dependency-license-report.gradle.plugin:2.1',
+                // https://plugins.gradle.org/plugin/org.hidetake.ssh
+                'org.hidetake:core:2.11.2',
+                // https://plugins.gradle.org/plugin/com.gorylenko.gradle-git-properties
+                'com.gorylenko.gradle-git-properties:gradle-git-properties:2.4.1',
+                "com.mysql:mysql-connector-j:9.0.0"
+        )
+    }
+}
+
+plugins {
+    alias(libs.plugins.java)
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+}
+
+group = 'com.bot'
+version = '0.0.1-SNAPSHOT'
+description = 'flowable'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+            url = nexusUrl
+        }
+        maven {
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+            url = nexusUrl2
+        }
+    }
+}
+
+// 根目錄不需要包jar
+bootJar.enabled = false
+jar.enabled = false
+

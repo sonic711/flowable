@@ -1,0 +1,27 @@
+dependencies {
+
+    // Flowable 流程引擎
+    implementation(libs.flowable.spring.boot.starter.process)
+    implementation(libs.flowable.spring.boot.starter.actuator)
+    implementation(libs.flowable.spring.boot.starter.rest)
+
+    // Spring Boot 核心
+    implementation(libs.spring.boot.starter)
+    implementation(libs.spring.boot.starter.data.jpa)
+
+    // H2 資料庫（測試用）
+    runtimeOnly(libs.h2.database)
+
+    // 測試依賴
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.testcontainers.junit.jupiter)
+}
+
+bootJar.enabled = false
+// 非可執行模組配置
+jar {
+    enabled = true
+    archiveClassifier = ''
+}

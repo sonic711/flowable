@@ -1,0 +1,10 @@
+description = 'flowable'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.projectlombok:lombok'
+}
+
+bootRun.enabled = false
+bootJar.enabled = false
+jar.enabled = true

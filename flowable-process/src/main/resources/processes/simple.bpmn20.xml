@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://blue.flowable.com/processes"
+             id="simple-process-definitions"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL 
+                                 http://www.omg.org/spec/BPMN/20100524/BPMN20.xsd">
+
+  <!-- 簡單示範流程定義 -->
+  <process id="simpleProcess" name="簡單示範流程" isExecutable="true">
+    
+    <!-- 流程文件說明 -->
+    <documentation>
+      這是一個簡單的示範流程，用於驗證 Flowable 引擎的基本功能。
+      流程包含：開始事件 → 使用者任務 → 結束事件
+      
+      適用場景：
+      - 系統功能驗證
+      - 開發環境測試
+      - 流程引擎初始化檢查
+    </documentation>
+
+    <!-- 開始事件 -->
+    <startEvent id="startEvent" name="流程開始">
+      <documentation>流程的起始點，當呼叫 startProcessInstanceByKey 時觸發</documentation>
+    </startEvent>
+
+    <!-- 使用者任務 -->
+    <userTask id="userTask" name="處理申請" flowable:assignee="demo">
+      <documentation>
+        需要使用者手動處理的任務。
+        預設指派給 'demo' 使用者，可在啟動流程時透過變數動態指派。
+      </documentation>
+      
+      <!-- 任務表單屬性 -->
+      <extensionElements>
+        <flowable:formProperty id="applicantName" name="申請人姓名" type="string" required="true">
+          <flowable:value id="description" name="請輸入申請人的姓名"/>
+        </flowable:formProperty>
+        
+        <flowable:formProperty id="applicationReason" name="申請原因" type="string" required="true">
+          <flowable:value id="description" name="請說明申請的具體原因"/>
+        </flowable:formProperty>
+        
+        <flowable:formProperty id="priority" name="優先級" type="enum" required="false">
+          <flowable:value id="low" name="低"/>
+          <flowable:value id="medium" name="中"/>
+          <flowable:value id="high" name="高"/>
+        </flowable:formProperty>
+        
+        <flowable:formProperty id="approvalResult" name="審核結果" type="enum" required="true">
+          <flowable:value id="approved" name="通過"/>
+          <flowable:value id="rejected" name="拒絕"/>
+        </flowable:formProperty>
+        
+        <flowable:formProperty id="approvalComment" name="審核意見" type="string" required="false">
+          <flowable:value id="description" name="請填寫審核意見（選填）"/>
+        </flowable:formProperty>
+      </extensionElements>
+    </userTask>
+
+    <!-- 結束事件 -->
+    <endEvent id="endEvent" name="流程結束">
+      <documentation>流程的結束點，任務完成後自動到達此節點</documentation>
+    </endEvent>
+
+    <!-- 序列流定義 -->
+    <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="userTask">
+      <documentation>從開始事件到使用者任務的連線</documentation>
+    </sequenceFlow>
+    
+    <sequenceFlow id="flow2" sourceRef="userTask" targetRef="endEvent">
+      <documentation>從使用者任務到結束事件的連線</documentation>
+    </sequenceFlow>
+
+  </process>
+
+  <!-- BPMN 圖表定義（用於流程圖顯示） -->
+  <bpmndi:BPMNDiagram xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                      xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+                      xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+                      id="simpleProcessDiagram">
+    
+    <bpmndi:BPMNPlane bpmnElement="simpleProcess" id="simpleProcessPlane">
+      
+      <!-- 開始事件圖形 -->
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="startEventShape">
+        <omgdc:Bounds x="100" y="150" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="88" y="190" width="60" height="20"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- 使用者任務圖形 -->
+      <bpmndi:BPMNShape bpmnElement="userTask" id="userTaskShape">
+        <omgdc:Bounds x="200" y="128" width="100" height="80"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="220" y="155" width="60" height="20"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- 結束事件圖形 -->
+      <bpmndi:BPMNShape bpmnElement="endEvent" id="endEventShape">
+        <omgdc:Bounds x="370" y="150" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="358" y="190" width="60" height="20"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- 連線圖形 -->
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="flow1Shape">
+        <omgdi:waypoint x="136" y="168"/>
+        <omgdi:waypoint x="200" y="168"/>
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="flow2Shape">
+        <omgdi:waypoint x="300" y="168"/>
+        <omgdi:waypoint x="370" y="168"/>
+      </bpmndi:BPMNEdge>
+      
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

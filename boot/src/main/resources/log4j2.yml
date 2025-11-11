@@ -1,0 +1,262 @@
+Configutation:
+  name: Default
+  status: DEBUG
+  monitorInterval: 30
+  shutdownHook: disable
+  Properties:
+    Property:
+      - name: BASE_PATH
+        value: ${sys:BASE_PATH:-/app/fsap/log}
+      - name: APPLICATION_NAME
+        value: ${sys:APPLICATION_NAME:-flowable}
+      - name: LOG_PATH
+        value: ${property:BASE_PATH}/${property:APPLICATION_NAME}
+      - name: JMS_SYS_INFO_ORIGINAL_PATH
+        value: ${property:BASE_PATH}/log-agent-client/jmsSysInfo/original # 原始路徑
+      - name: JMS_SYS_INFO_BACKUP_PATH
+        value: ${property:BASE_PATH}/log-agent-client/jmsSysInfo/backup # 備份路徑
+      - name: LOG_EXCEPTION_CONVERSION_WORD
+        value: '%xwEx{none}'
+  Appenders:
+    Console:
+      - name: STDOUT
+        target: SYSTEM_OUT
+        PatternLayout:
+          disableAnsi: ${sys:LOG4J2_DISABLE_ANSI:-false}
+          Pattern: '%d{HH:mm:ss.SSS} [%highlight{%thread}{INFO=green bold, DEBUG=Bright blue, TRACE=Normal, FATAL=red blink, ERROR=red, WARN=yellow}] %highlight{%-5level %logger{36}}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=green bold, DEBUG=Bright blue, TRACE=Normal} %X - %msg%n${LOG_EXCEPTION_CONVERSION_WORD}'
+    RollingFile:
+      - name: APPLICATION
+        ignoreExceptions: false
+        fileName: ${LOG_PATH}/${APPLICATION_NAME}_application.log
+        filePattern: ${LOG_PATH}/%d{yyyyMMdd}/${APPLICATION_NAME}_application_%d{yyyyMMddHH}.log.gz
+        PatternLayout:
+          charset: "UTF-8"
+          pattern: '%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %X - %msg%n${LOG_EXCEPTION_CONVERSION_WORD}'
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true # 確保滾動發生在整點時
+            interval: 1 # 每小時觸發
+        DefaultRolloverStrategy:
+          max: 720
+          Delete: #刪除策略
+            basePath: "${LOG_PATH}"
+            maxDepth: 2
+            IfFileName:
+              glob: "*/${APPLICATION_NAME}_application_*.log.gz"
+            IfLastModified:
+              age: "30d"
+      - name: JmsSysInfoLogger
+        ignoreExceptions: false
+        fileName: ${JMS_SYS_INFO_ORIGINAL_PATH}/${APPLICATION_NAME}/${APPLICATION_NAME}.log
+        filePattern: ${JMS_SYS_INFO_ORIGINAL_PATH}/%d{yyyyMMdd}/${APPLICATION_NAME}/${APPLICATION_NAME}_%d{yyyyMMddHHmm}.log.gz
+        PatternLayout:
+          charset: "UTF-8"
+          pattern: '%d{HH:mm:ss.SSS} - [%thread] - %-5level - %X{JMS_MDC_KEY} - %replace{%msg}{[\r\n]+}{ }%n' #先不考慮 e 異常直接印出,弱掃也會有問題
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true # 確保滾動發生在整分鐘時 (例如 12:00, 12:05 等)
+            interval: 1 # 每N分鐘觸發
+        DefaultRolloverStrategy:
+          max: 43200
+      - name: LOG-AGENT
+        ignoreExceptions: false
+        fileName: ${LOG_PATH}/log_agent_client_process.log
+        filePattern: ${LOG_PATH}/%d{yyyyMMdd}/${APPLICATION_NAME}_log_agent_client_process_%d{yyyy-MM-dd-HH}.log.gz
+        PatternLayout:
+          charset: "UTF-8"
+          pattern: '%d{HH:mm:ss.SSS} [%thread] %-5level %logger{1} - %X - %msg%n${LOG_EXCEPTION_CONVERSION_WORD}'
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true # 確保滾動發生在整點時
+            interval: 1 # 每小時觸發
+        DefaultRolloverStrategy:
+          max: 720
+          Delete: #刪除策略依照設定天數刪除
+            basePath: "${LOG_PATH}"
+            maxDepth: 2
+            IfFileName:
+              glob: "*/${APPLICATION_NAME}_log_agent_client_process_*.log.gz"
+            IfLastModified:
+              age: "30d"
+  Loggers:
+    Root:
+      level: INFO
+      includeLocation: true
+      AppenderRef:
+        - ref: STDOUT
+        - ref: APPLICATION
+    AsyncLogger:
+      - name: java
+        level: WARN
+      - name: javax
+        level: WARN
+      - name: org
+        level: WARN
+      - name: com
+        level: INFO
+      - name: com.blue
+        level: TRACE
+      - name: com.bt
+        level: TRACE
+      - name: com.bot
+        level: TRACE #TRACE
+      - name: com.blue.common.utils.web.config.UndertowConfiguration.CustomizationBean.UndertowAccessLogReceiver
+        level: DEBUG
+      - name: com.blue.common.utils.security.config
+        level: INFO
+      - name: com.blue.common.utils.hystrix.turbine.monitor
+        level: INFO
+      - name: com.google
+        level: DEBUG
+      - name: io.netty
+        level: DEBUG
+      - name: org.xnio
+        level: DEBUG
+      - name: org.apache.logging
+        level: TRACE
+      # io.grpc
+      - name: io.grpc
+        level: TRACE
+      - name: io.grpc.internal.ServerImplBuilder
+        level: INFO
+      - name: io.grpc.netty.Utils
+        level: INFO
+      - name: io.grpc.netty.shaded.io.grpc.netty.Utils
+        level: INFO
+      - name: io.grpc.internal.ManagedChannelImplBuilder
+        level: INFO
+      - name: io.grpc.Context
+        level: INFO
+      - name: io.grpc.netty.shaded.io.grpc.netty
+        level: INFO
+      - name: org.springframework
+        level: INFO
+      # spring cloud
+      - name: org.springframework.cloud
+        level: DEBUG
+      - name: org.springframework.cloud.context.scope.GenericScope
+        level: INFO
+      - name: org.springframework.cloud.client.loadbalancer
+        level: DEBUG
+      - name: org.springframework.cloud.commons.util
+        level: INFO
+      - name: org.springframework.cloud.netflix.eureka.server.InstanceRegistry
+        level: INFO
+      # spring cloud gateway
+      - name: org.springframework.cloud.gateway
+        level: DEBUG
+      - name: org.springframework.cloud.gateway.filter
+        level: TRACE
+      - name: org.springframework.cloud.gateway.route
+        level: INFO
+      - name: org.springframework.cloud.gateway.filter.GatewayMetricsFilter
+        level: INFO
+      - name: org.springframework.retry
+        level: DEBUG
+      - name: org.springframework.core
+        level: INFO
+      # DEBUG for spring component scan
+      - name: org.springframework.core.io.support
+        level: DEBUG
+      - name: org.springframework.context.annotation
+        level: DEBUG
+      - name: org.springframework.context
+        level: INFO
+      - name: org.springframework.context.i18n
+        level: INFO
+      - name: org.springframework.orm.jpa
+        level: DEBUG
+        # Open Session In View
+      - name: org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor
+        level: INFO #DEBUG
+      # transaction
+      - name: org.springframework.orm.jpa.JpaTransactionManager
+        level: INFO #DEBUG
+      - name: org.springframework.transaction
+        level: INFO #DEBUG
+      - name: org.springframework.transaction.interceptor
+        level: INFO #TRACE
+      # for debuging web page mapping and redirection
+      - name: _org.springframework.web
+        level: DEBUG
+      - name: org.springframework.web.servlet
+        level: INFO
+      - name: org.springframework.web.reactive.function.client.ExchangeFunctions
+        level: INFO
+      - name: org.springframework.boot.context.config.ConfigDataEnvironment
+        level: TRACE
+      # oauth and keycloak
+      - name: org.keycloak
+        level: DEBUG
+      - name: org.keycloak.adapters.OAuthRequestAuthenticator
+        level: TRACE
+      - name: org.keycloak.adapters.AdapterUtils
+        level: TRACE
+      - name: org.keycloak.adapters.PreAuthActionsHandler
+        level: DEBUG
+      # hibernate
+      - name: org.hibernate
+        level: INFO
+      - name: org.hibernate.cfg.Settings
+        level: DEBUG
+      - name: org.hibernate.SQL_SLOW
+        level: INFO
+      # flyway
+      - name: org.flywaydb.core.internal.scanner
+        level: DEBUG
+      - name: org.flywaydb
+        level: INFO
+      - name: com.zaxxer.hikari.HikariConfig
+        level: DEBUG
+      # undertow
+      - name: io.undertow
+        level: INFO
+      # resilience4j
+      - name: io.github.resilience4j
+        level: DEBUG
+      # reactor
+      - name: reactor.netty.http.client
+        level: INFO
+      # netflix
+      - name: com.netflix.discovery
+        level: WARN
+      - name: com.netflix.discovery.DiscoveryClient
+        level: ERROR
+      - name: com.netflix.discovery.InstanceInfoReplicator
+        level: ERROR
+      - name: p6spy
+        level: INFO
+        additivity: true
+        AppenderRef:
+          - ref: P6SPY
+      - name: org.springframework.http.server.reactive
+        level: DEBUG
+      - name: org.springframework.web.reactive
+        level: DEBUG
+      - name: reactor.netty
+        level: INFO
+      - name: reactor.ipc.netty
+        level: DEBUG
+      - name: liquibase
+        level: DEBUG
+      # testcontainers
+      - name: playtika.testcontainer
+        level: TRACE
+      - name: org.testcontainer
+        level: INFO
+      - name: tc
+        level: DEBUG
+      # spring boot admin
+      - name: de.codecentric.boot.admin
+        level: INFO
+      # log agent
+      - name: JmsSysInfoLogger
+        level: DEBUG
+        additivity: false
+        AppenderRef:
+          - ref: JmsSysInfoLogger
+      - name: LOG-AGENT
+        level: DEBUG
+        additivity: false
+        AppenderRef:
+          - ref: LOG-AGENT

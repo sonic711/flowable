@@ -1,0 +1,114 @@
+[versions]
+# Java 版本
+java = "21"
+
+# BlueTech 版本
+blue-tech = "0.99-SNAPSHOT"
+
+# Spring Boot 版本
+spring-boot = "3.5.5"
+spring-dependency-management = "1.1.7"
+
+# Flowable 版本
+flowable = "7.2.0"
+
+# Camel版本
+camel = "4.14.0"
+
+# 資料庫版本
+h2 = "2.1.214"
+
+# 測試框架版本（版本由 Spring Boot BOM 管理）
+mockito = "5.4.0"
+assertj = "3.24.2"
+testcontainers = "1.19.0"
+
+# 日誌框架版本
+log4j2 = "2.25.1"
+slf4j = "2.0.17"
+flogger = "0.9"
+
+# API 文件版本
+springdoc = "2.8.10"
+
+# 工具庫版本
+jackson = "2.19.2"
+commons-lang3 = "3.18.0"
+
+[libraries]
+# BlueTech 監控
+blue-tech-dispatcher-client = { module = "com.bot:fsap-dispatcher-client", version.ref = "blue-tech" }
+blue-tech-monitor-plugin = { module = "com.bot:fsap-monitor-plugin", version.ref = "blue-tech" }
+
+# Spring Boot 核心
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-log4j2 = { module = "org.springframework.boot:spring-boot-starter-log4j2", version.ref = "spring-boot" }
+spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
+
+# Flowable 流程引擎
+flowable-spring-boot-starter-process = { module = "org.flowable:flowable-spring-boot-starter-process", version.ref = "flowable" }
+flowable-spring-boot-starter-actuator = { module = "org.flowable:flowable-spring-boot-starter-actuator", version.ref = "flowable" }
+flowable-spring-boot-starter-rest = { module = "org.flowable:flowable-spring-boot-starter-rest", version.ref = "flowable" }
+
+# 資料庫
+h2-database = { module = "com.h2database:h2", version.ref = "h2" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+
+# 測試框架（版本由 Spring Boot BOM 管理）
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+# 日誌框架
+log4j2-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j2" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j2" }
+log4j-jcl = { module = "org.apache.logging.log4j:log4j-jcl", version.ref = "log4j2" }
+log4j-jul = { module = "org.apache.logging.log4j:log4j-jul", version.ref = "log4j2" }
+log4j-12-api = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j2" }
+flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
+flogger-system-backend = { module = "com.google.flogger:flogger-system-backend", version.ref = "flogger" }
+
+# API 文件
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+# 工具庫
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+
+[bundles]
+# Spring Web 相關
+spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
+
+# 測試套件
+test-suite = ["junit-jupiter", "junit-jupiter-engine", "mockito-core", "mockito-junit-jupiter", "assertj-core", "spring-boot-starter-test"]
+
+# 日誌套件
+logging = ["log4j2-core", "log4j-slf4j2-impl", "log4j-jcl", "log4j-jul", "log4j-12-api", "flogger", "flogger-system-backend"]
+
+# Jackson JSON 處理
+jackson = ["jackson-databind", "jackson-datatype-jsr310"]
+
+# Flowable 引擎
+flowable-engine = ["flowable-spring-boot-starter-process", "flowable-spring-boot-starter-actuator"]
+
+# 資料存取層
+data-jpa = ["spring-boot-starter-data-jpa", "h2-database"]
+
+[plugins]
+# Java 相關
+java = { id = "java" }
+java-library = { id = "java-library" }
+maven-publish = { id = "maven-publish" }
+
+# Spring Boot 相關
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

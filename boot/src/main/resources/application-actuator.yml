@@ -1,0 +1,18 @@
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    access:
+      default: read_only
+  endpoint:
+    health:
+      show-details: ALWAYS
+    shutdown:
+      access: none
+  health:
+    ldap:
+      enabled: false
