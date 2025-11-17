@@ -47,8 +47,6 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
-spring-boot-starter-log4j2 = { module = "org.springframework.boot:spring-boot-starter-log4j2", version.ref = "spring-boot" }
-spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
 
 # Flowable 流程引擎
 flowable-spring-boot-starter-process = { module = "org.flowable:flowable-spring-boot-starter-process", version.ref = "flowable" }
@@ -86,10 +84,13 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
-
+lombok = { module = "org.projectlombok:lombok" }
 [bundles]
+
+blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin"]
+
 # Spring Web 相關
-spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
+spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-security"]
 
 # 測試套件
 test-suite = ["junit-jupiter", "junit-jupiter-engine", "mockito-core", "mockito-junit-jupiter", "assertj-core", "spring-boot-starter-test"]
@@ -101,7 +102,7 @@ logging = ["log4j2-core", "log4j-slf4j2-impl", "log4j-jcl", "log4j-jul", "log4j-
 jackson = ["jackson-databind", "jackson-datatype-jsr310"]
 
 # Flowable 引擎
-flowable-engine = ["flowable-spring-boot-starter-process", "flowable-spring-boot-starter-actuator"]
+flowable = ["flowable-spring-boot-starter-actuator", "flowable-spring-boot-starter", "flowable-spring-boot-starter-rest"]
 
 # 資料存取層
 data-jpa = ["spring-boot-starter-data-jpa", "h2-database"]

@@ -1,14 +1,7 @@
 dependencies {
 
     // Flowable 流程引擎
-    implementation(libs.flowable.spring.boot.starter.actuator)
-    implementation(libs.flowable.spring.boot.starter.rest)
-    implementation(libs.flowable.spring.boot.starter)
-
-    // Spring Boot 核心
-    implementation(libs.spring.boot.starter)
-    implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.spring.boot.starter.security)
+    implementation(libs.bundles.flowable)
 
     // H2 資料庫（測試用）
     //runtimeOnly(libs.h2.database)

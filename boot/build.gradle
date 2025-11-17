@@ -7,11 +7,7 @@ apply from: "$rootProject.projectDir/gradle/logging/logging.gradle"
 dependencies {
     implementation project(':web')
     implementation project(':flowable-process')
-
-    implementation(
-            libs.blue.tech.dispatcher.client,
-            libs.blue.tech.monitor.plugin,
-    )
+    implementation(libs.bundles.blue.tech.bundle)
 }
 
 def activeProfile  = System.getProperty("env", project.hasProperty("profile") ? project.property("profile") : "local")

@@ -1,8 +1,8 @@
 description = 'flowable'
 
 dependencies {
-    implementation libs.spring.boot.starter.web
-    compileOnly 'org.projectlombok:lombok'
+    implementation libs.bundles.spring.web
+    compileOnly libs.lombok
 }
 
 bootRun.enabled = false

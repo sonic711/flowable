@@ -1,4 +1,4 @@
-package com.bot.fsap.flowable.process.security;
+package com.bot.fsap.flowable.web.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
