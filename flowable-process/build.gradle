@@ -4,13 +4,16 @@ dependencies {
     implementation(libs.flowable.spring.boot.starter.process)
     implementation(libs.flowable.spring.boot.starter.actuator)
     implementation(libs.flowable.spring.boot.starter.rest)
+    implementation(libs.flowable.spring.boot.starter)
 
     // Spring Boot 核心
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.security)
 
     // H2 資料庫（測試用）
-    runtimeOnly(libs.h2.database)
+    //runtimeOnly(libs.h2.database)
+    runtimeOnly(libs.oracle.jdbc.driver)
 
     // 測試依賴
     testImplementation(libs.spring.boot.starter.test)

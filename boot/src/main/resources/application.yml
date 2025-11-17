@@ -7,35 +7,16 @@ spring:
     include: eureka,actuator
   # DataSource
   datasource:
-    url: jdbc:h2:mem:flowable;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=LEGACY
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-
-    # HikariCP
-    hikari:
-      pool-name: FlowableHikariCP
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      leak-detection-threshold: 60000
-
-  # H2
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: false
-        trace: false
+    url: jdbc:oracle:thin:@127.0.0.1:1521/ORCLCDB
+    username: FLOWTESTDB
+    password: flowtest123
+    driver-class-name: oracle.jdbc.OracleDriver
 
   # JPA
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true

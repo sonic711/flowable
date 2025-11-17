@@ -2,26 +2,19 @@
 # 此配置檔案包含 Flowable 引擎的詳細設定參數
 # Flowable 引擎配置
 flowable:
-  # 流程引擎配置
-  process:
-    # 資料庫配置
-    database-schema-update: true
-    database-type: h2
-
-    # 異步執行器配置
-    async-executor-activate: true
-    async-executor:
-      default-async-job-acquire-wait-time: 10s
-      default-timer-job-acquire-wait-time: 10s
-      max-async-jobs-due-per-acquisition: 1
-
+  database-schema-update: true
+  # Flowable會去掃DB的表，如果已經存在就不建立，若有多個db user時，需要指定schema(但目前實測此參數無效
+  database-schema: FLOWTESTDB
+  async-executor-activate: true
   # 歷史資料配置
   history-level: full
 
   # IDM 身份管理配置
   idm:
     enabled: true
-    password-encoder: org.springframework.security.crypto.password.NoOpPasswordEncoder
+    password-encoder: spring_delegating_noop
+    ldap:
+      enabled: false
 
   # 通用配置
   check-process-definitions: true
@@ -31,31 +24,8 @@ flowable:
     name: "Blue Flowable Process Deployment"
 
   # REST API 配置
+  rest-api-enabled: true
   rest:
-    app:
-      enable: true
-      authentication-mode: verify-privilege
-
-# 應用程式特定配置
-blue:
-  flowable:
-    # 流程部署配置
-    process-deployment:
-      enabled: true
-      auto-deploy-on-startup: true
-      process-resources-location: classpath:/processes/
-
-    # 任務配置
-    task:
-      default-assignee: demo
-      default-candidate-groups: ["users", "managers"]
-
-    # 監控配置
-    monitoring:
-      enabled: true
-      metrics-enabled: true
-
-    # 安全配置
-    security:
-      enabled: false
-      admin-users: ["admin"]
+    enabled: true
+  app:
+    enabled: true
