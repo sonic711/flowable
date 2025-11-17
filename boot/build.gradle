@@ -10,7 +10,7 @@ dependencies {
     implementation(libs.bundles.blue.tech.bundle)
 }
 
-def activeProfile  = System.getProperty("env", project.hasProperty("profile") ? project.property("profile") : "local")
+def activeProfile = System.getProperty("env", project.hasProperty("profile") ? project.property("profile") : "local")
 
 processResources {
 
@@ -22,9 +22,9 @@ processResources {
             // 在文件中替換特定的 tokens
             filter(ReplaceTokens, tokens: [
                     "spring.active.profiles": activeProfile,
-                    "project.groupId": project.group,
-                    "project.artifactId": project.name,
-                    "project.version": project.version
+                    "project.groupId"       : project.group,
+                    "project.artifactId"    : project.name,
+                    "project.version"       : project.version
             ])
         }
     }
@@ -37,9 +37,9 @@ processResources {
         main {
             resources {
                 // 過濾 resources
-                include ("application.yml")
-                include ("application-actuator.yml")
-                include ("application-eureka.yml")
+                include("application.yml")
+                include("application-actuator.yml")
+                include("application-eureka.yml")
             }
         }
     }
@@ -49,6 +49,11 @@ processResources {
         from "src/main/resources/log4j2.yml"
         into 'src/main/resources/'
     }
+}
+
+
+jar {
+    enabled = false
 }
 
 bootJar {

@@ -14,7 +14,9 @@ dependencies {
     testImplementation(libs.testcontainers.junit.jupiter)
 }
 
-bootJar.enabled = false
+bootJar {
+    enabled = false
+}
 // 非可執行模組配置
 jar {
     enabled = true
