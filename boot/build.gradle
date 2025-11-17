@@ -7,7 +7,6 @@ apply from: "$rootProject.projectDir/gradle/logging/logging.gradle"
 dependencies {
     implementation project(':web')
     implementation project(':flowable-process')
-    implementation libs.springdoc.openapi.starter.webmvc.ui
 
     implementation(
             libs.blue.tech.dispatcher.client,

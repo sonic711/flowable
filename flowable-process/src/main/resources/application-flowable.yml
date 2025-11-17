@@ -2,9 +2,11 @@
 # 此配置檔案包含 Flowable 引擎的詳細設定參數
 # Flowable 引擎配置
 flowable:
+
   database-schema-update: true
-  # Flowable會去掃DB的表，如果已經存在就不建立，若有多個db user時，需要指定schema(但目前實測此參數無效
+  # Flowable會去掃DB的表，如果已經存在就不建立，若有多個db user時，需要指定schema
   database-schema: FLOWTESTDB
+  # 異步執行器配置
   async-executor-activate: true
   # 歷史資料配置
   history-level: full
@@ -17,4 +19,8 @@ flowable:
       enabled: false
 
   # REST API 配置
-  rest-api-enabled: false
+  rest-api-enabled: true
+  # 設定REST admin使用者
+  admin:
+    users: rest-admin,admin
+    default-pw: test

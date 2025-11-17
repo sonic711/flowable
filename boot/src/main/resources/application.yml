@@ -4,7 +4,7 @@ spring:
     name: fsap-flowable
   profiles:
     active: @spring.active.profiles@
-    include: eureka,actuator
+    include: eureka,actuator,flowable
   # DataSource
   datasource:
     url: jdbc:oracle:thin:@127.0.0.1:1521/ORCLCDB
