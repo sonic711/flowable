@@ -16,16 +16,5 @@ flowable:
     ldap:
       enabled: false
 
-  # 通用配置
-  check-process-definitions: true
-
-  # 部署配置
-  deployment:
-    name: "Blue Flowable Process Deployment"
-
   # REST API 配置
-  rest-api-enabled: true
-  rest:
-    enabled: true
-  app:
-    enabled: true
+  rest-api-enabled: false

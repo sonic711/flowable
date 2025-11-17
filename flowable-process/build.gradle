@@ -1,7 +1,6 @@
 dependencies {
 
     // Flowable 流程引擎
-    implementation(libs.flowable.spring.boot.starter.process)
     implementation(libs.flowable.spring.boot.starter.actuator)
     implementation(libs.flowable.spring.boot.starter.rest)
     implementation(libs.flowable.spring.boot.starter)
