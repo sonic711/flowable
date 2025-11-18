@@ -1,0 +1,231 @@
+bridge.dispatcher.forced: false
+bridge.dispatcher.ignore: false
+nebula.adapter:
+  persistent-ignore: true
+  timeout: 30000
+  refresh-timeout: 2000
+  refresh-interval: -1
+  static-hosts:
+    - application: FSAP-GATEWAY
+      ip: 10.1.2.214
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-GATEWAY
+      ip: 10.1.2.215
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-GATEWAY-REST
+      ip: 10.1.2.78
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-GATEWAY-REST
+      ip: 10.1.2.218
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-BATCH-GATEWAY
+      ip: 10.1.2.216
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-BATCH-GATEWAY
+      ip: 10.1.2.217
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-BATCH-GATEWAY-REST
+      ip: 10.1.2.181
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-BATCH-GATEWAY-REST
+      ip: 10.1.2.183
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-RUNTIME
+      ip: 10.1.2.17
+      protocols:
+        - scheme: grpc
+          port: 50081
+        - scheme: http
+          port: 10081
+          default-path: fsap-runtime
+    - application: FSAP-RUNTIME
+      ip: 10.1.2.18
+      protocols:
+        - scheme: grpc
+          port: 50081
+        - scheme: http
+          port: 10081
+          default-path: fsap-runtime
+    - application: FSAP-BATCH-RUNTIME
+      ip: 10.1.2.20
+      protocols:
+        - scheme: grpc
+          port: 50087
+        - scheme: http
+          port: 10087
+          default-path: fsap-batch-runtime
+    - application: FSAP-BATCH-RUNTIME
+      ip: 10.1.2.21
+      protocols:
+        - scheme: grpc
+          port: 50087
+        - scheme: http
+          port: 10087
+          default-path: fsap-batch-runtime
+    - application: FSAP-BATCH
+      ip: 10.1.2.20
+      protocols:
+        - scheme: grpc
+          port: 50082
+        - scheme: http
+          port: 10082
+          default-path: fsap-batch
+    - application: FSAP-BATCH
+      ip: 10.1.2.21
+      protocols:
+        - scheme: grpc
+          port: 50082
+        - scheme: http
+          port: 10082
+          default-path: fsap-batch
+    - application: FSAP-COMMON-SERVICE
+      ip: 10.1.2.17
+      protocols:
+        - scheme: grpc
+          port: 50083
+        - scheme: http
+          port: 10083
+          default-path: fsap-common-service
+    - application: FSAP-COMMON-SERVICE
+      ip: 10.1.2.18
+      protocols:
+        - scheme: grpc
+          port: 50083
+        - scheme: http
+          port: 10083
+          default-path: fsap-common-service
+    - application: FSAP-COMMON-SERVICE
+      ip: 10.1.2.20
+      protocols:
+        - scheme: grpc
+          port: 50083
+        - scheme: http
+          port: 10083
+          default-path: fsap-common-service
+    - application: FSAP-COMMON-SERVICE
+      ip: 10.1.2.21
+      protocols:
+        - scheme: grpc
+          port: 50083
+        - scheme: http
+          port: 10083
+          default-path: fsap-common-service
+    - application: FSAP-SCHEDULE
+      ip: 10.1.11.46
+      protocols:
+        - scheme: grpc
+          port: 50086
+        - scheme: http
+          port: 10086
+          default-path: fsap-schedule
+    - application: FSAP-SCHEDULE
+      ip: 10.1.11.64
+      protocols:
+        - scheme: grpc
+          port: 50086
+        - scheme: http
+          port: 10086
+          default-path: fsap-schedule
+    - application: FAC
+      ip: 10.1.11.42
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: FAC
+      ip: 10.1.11.48
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: FAC-BATCH
+      ip: 10.1.11.43
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: FAC-BATCH
+      ip: 10.1.11.49
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCL
+      ip: 10.1.5.37
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCL
+      ip: 10.1.5.69
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCL-BATCH
+      ip: 10.1.5.43
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCL-BATCH
+      ip: 10.1.5.70
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCB
+      ip: 10.1.2.20
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+    - application: NCB
+      ip: 10.1.2.21
+      protocols:
+        - scheme: grpc
+          port: 50001
+        - scheme: http
+          port: 8080
+

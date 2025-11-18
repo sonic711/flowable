@@ -5,7 +5,7 @@ flowable:
 
   database-schema-update: true
   # Flowable會去掃DB的表，如果已經存在就不建立，若有多個db user時，需要指定schema
-  database-schema: FLOWTESTDB
+  database-schema: ${FLOWABLE_SCHEMA:FLOWTESTDB}
   # 異步執行器配置
   async-executor-activate: true
   # 歷史資料配置

@@ -4,7 +4,7 @@ java = "21"
 
 # BlueTech 版本
 blue-tech = "0.99-SNAPSHOT"
-
+model-grpc-common = "1.11.1"
 # Spring Boot 版本
 spring-boot = "3.5.6"
 spring-dependency-management = "1.1.7"
@@ -36,9 +36,11 @@ jackson = "2.19.2"
 commons-lang3 = "3.18.0"
 
 [libraries]
-# BlueTech 監控
+# BlueTech
 blue-tech-dispatcher-client = { module = "com.bot:fsap-dispatcher-client", version.ref = "blue-tech" }
 blue-tech-monitor-plugin = { module = "com.bot:fsap-monitor-plugin", version.ref = "blue-tech" }
+blue-tech-bridge-dispatcher = { module = "com.bot.fsap.wrapper:bridge-dispatcher-support", version.ref = "blue-tech" }
+blue-tech-model-grpc-common = { module = "com.bot.fsap.model:model-grpc-common", version.ref = "model-grpc-common" }
 
 # Spring Boot 核心
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
@@ -56,7 +58,7 @@ flowable-spring-boot-starter-rest = { module = "org.flowable:flowable-spring-boo
 
 # 資料庫
 h2-database = { module = "com.h2database:h2", version.ref = "h2" }
-oracle-jdbc-driver = { module = "com.oracle.database.jdbc:ojdbc11"}
+oracle-jdbc-driver = { module = "com.oracle.database.jdbc:ojdbc11" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
 
 # 測試框架（版本由 Spring Boot BOM 管理）
@@ -87,7 +89,7 @@ commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "co
 lombok = { module = "org.projectlombok:lombok" }
 [bundles]
 
-blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin"]
+blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin", "blue-tech-bridge-dispatcher", "blue-tech-model-grpc-common"]
 
 # Spring Web 相關
 spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-security"]

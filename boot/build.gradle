@@ -3,6 +3,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 description = 'boot'
 
 apply from: "$rootProject.projectDir/gradle/logging/logging.gradle"
+apply from: "$rootProject.projectDir/gradle/deploy/deploy.gradle"
 
 dependencies {
     implementation project(':web')
@@ -41,6 +42,7 @@ processResources {
                 include("application-actuator.yml")
                 include("application-eureka.yml")
                 include("application-info.yml")
+                include ("META-INF/*")
             }
         }
     }
@@ -59,7 +61,7 @@ jar {
 
 bootJar {
     archiveFileName.set('flowable.jar')
-    mainClass.set('com.bot.flowable.BootApplication')
+    mainClass.set('com.bot.fsap.flowable.BootApplication')
 }
 
 bootRun {

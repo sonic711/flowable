@@ -1,0 +1,121 @@
+bridge.dispatcher.forced: false
+bridge.dispatcher.ignore: false
+nebula.adapter:
+  persistent-ignore: true
+  timeout: 30000
+  refresh-timeout: 2000
+  refresh-interval: -1
+  static-hosts:
+    - application: FSAP-GATEWAY
+      ip: 172.17.24.74
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-GATEWAY-REST
+      ip: 172.17.24.77
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-BATCH-GATEWAY
+      ip: 172.17.24.72
+      protocols:
+        - scheme: grpc
+          port: 50080
+        - scheme: http
+          port: 10079
+    - application: FSAP-BATCH-GATEWAY-REST
+      ip: 172.17.24.66
+      protocols:
+        - scheme: grpc
+          port: 50088
+        - scheme: http
+          port: 10088
+    - application: FSAP-RUNTIME
+      ip: 172.17.24.77
+      protocols:
+        - scheme: grpc
+          port: 50081
+        - scheme: http
+          port: 10081
+          default-path: fsap-runtime
+    - application: FSAP-RUNTIME
+      ip: 172.17.24.78
+      protocols:
+        - scheme: grpc
+          port: 50081
+        - scheme: http
+          port: 10081
+          default-path: fsap-runtime
+    - application: FSAP-BATCH-RUNTIME
+      ip: 172.17.24.66
+      protocols:
+        - scheme: grpc
+          port: 50087
+        - scheme: http
+          port: 10087
+          default-path: fsap-batch-runtime
+    - application: FSAP-BATCH
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50082
+        - scheme: http
+          port: 10082
+          default-path: fsap-batch
+    - application: FSAP-COMMON-SERVICE
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50083
+        - scheme: http
+          port: 10083
+          default-path: fsap-common-service
+    - application: FSAP-SCHEDULE
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50086
+        - scheme: http
+          port: 10086
+          default-path: fsap-schedule
+    - application: FAC
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50221
+        - scheme: http
+          port: 10221
+    - application: FAC-BATCH
+      ip: 172.17.24.72
+      protocols:
+        - scheme: grpc
+          port: 50225
+        - scheme: http
+          port: 10225
+    - application: NCL
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50222
+        - scheme: http
+          port: 20222
+    - application: NCL-BATCH
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50224
+        - scheme: http
+          port: 10224
+    - application: NCB
+      ip: 172.17.24.18
+      protocols:
+        - scheme: grpc
+          port: 50110
+        - scheme: http
+          port: 10110
+          default-path: ncd-server
+

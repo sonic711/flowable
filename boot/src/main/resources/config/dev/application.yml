@@ -1,0 +1,30 @@
+# Spring
+spring:
+  application:
+    name: flowable
+  profiles:
+    include: eureka,actuator,info,flowable
+  config:
+    import: adapter.yml
+  # DataSource
+  datasource:
+    url: jdbc:oracle:thin:@172.17.24.72:1521:ORCL
+    username: POCFLOWABLE
+    password: fsapadm123
+    driverClassName: oracle.jdbc.OracleDriver
+  # JPA
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+server:
+  port: 8081
+  servlet:
+    encoding:
+      enabled: false

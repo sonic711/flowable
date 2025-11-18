@@ -1,0 +1,449 @@
+import static org.gradle.internal.logging.text.StyledTextOutput.Style
+import org.gradle.internal.logging.text.StyledTextOutputFactory
+def out = services.get(StyledTextOutputFactory).create("gradle-color-output")
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+apply plugin: "org.hidetake.ssh"
+
+def privateKey = file(System.properties['user.home'] + "/.ssh/id_rsa")
+def remote_prepared_folder = 'prepared_build'
+def local_app_home = file("${rootProject.projectDir}/etc")
+def local_app_home_folders_recurse = []
+def exclude_app_folders_recurse  = ['boot/logs']
+def exclude_app_files_from_parent_folders = ['boot', 'boot/config']
+def include_app_files = ['boot/config/log4j2.yml']
+def exclude_app_files = []
+
+def deploy_remotes = [
+        DEV_server: [
+            env: ['dev'],
+            bin_home: '/app/fsap/bin',
+            app_home: '/app/fsap/flowable',
+            jar_name: 'flowable.jar',
+            spring_config_filename: 'application.yml',
+            spring_config_adapter_filename: 'adapter.yml',
+            env_info: { server_config ->
+                [
+                    [only_first_time: true, name: 'JAVA_HOME', value: '/app/java/java21'],
+                    [only_first_time: false, name: 'BOOTJAR_LOCATION', value: "${server_config.jar_name}"],
+                    [only_first_time: false, name: 'SPRING_CONFIG_ADDITIONAL_LOCATION', value: "${server_config.spring_config_filename},${server_config.spring_config_adapter_filename}"],
+                    [only_first_time: false, name: 'LOGGING_CONFIG', value: 'log4j2.yml'],
+                    [only_first_time: false, name: 'FLOWABLE_SCHEMA', value: 'POCFLOWABLE'],
+                ]
+            },
+            put_files: { server_config ->
+                [
+                    [from: "${project.projectDir.path}/src/main/resources/config/${server_config.env[0]}/${server_config.spring_config_filename}", into: "${remote_prepared_folder}", is_into_app_home: true],
+                    [from: "${project.projectDir.path}/src/main/resources/config/${server_config.env[0]}/${server_config.spring_config_adapter_filename}", into: "${remote_prepared_folder}", is_into_app_home: true],
+                    [from: "${project.projectDir.path}/src/main/resources/config/${server_config.env[0]}/application-eureka.yml", into: "${remote_prepared_folder}", is_into_app_home: true],
+                    [from: "${project.projectDir.path}/src/main/resources/log4j2.yml", into: "${remote_prepared_folder}", is_into_app_home: true],
+                    [from: tasks.findByName('bootJar'), into: "${remote_prepared_folder}/${server_config.jar_name}", is_into_app_home: true, is_rename: true, is_fetch_git_properties: true],
+                ]
+            },
+            server: [
+                identity: privateKey,
+                host: '172.17.24.79',
+                user: 'flowuser'
+            ],
+            api_test: [
+                protocol: 'http',
+                port: 8081,
+                context: '/ncb-server'
+            ]
+        ],
+
+]
+
+task sshInfo {
+    group = 'Deploy'
+    description = 'Show SSH Private Key Location'
+    doFirst {
+        logger.quiet "\n\n\u001b[32mLoading private key for deploy at location ${privateKey} \u001B[0m\n\n"
+    }
+}
+
+ssh.settings {
+    dryRun = project.hasProperty('dryRun')
+    //pty = true
+    encoding = 'UTF-8'
+    knownHosts = allowAnyHosts
+    timeoutSec = 600
+    jschLog = true
+}
+
+task put_files {
+    group = 'Deploy'
+    description = 'Put Files to Remote Server'
+    doLast {
+        def system_prop = System.getProperties()
+        def env = system_prop.get('env', 'SIT')
+        def is_first_time = system_prop.get('is_first_time', 'false').toBoolean()
+        def exclude_remotes = system_prop.get('exclude_remotes', '')
+        def include_remotes = system_prop.get('include_remotes', '')
+        def is_JMH = env.endsWith('_JMH')
+        def env_file_name = is_JMH ? 'jmh.env' : '.env'
+        def currentTime = LocalDateTime.now()
+        def str_currentTime = currentTime.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+        def build_number = System.getenv('BUILD_NUMBER') ?: 'Local'
+        def N_VERSION_KEEP = (System.getenv('N_VERSION_KEEP') ?: '3').toInteger()
+
+        if (deploy.enabled) {
+            deploy_remotes.findAll(x ->
+                    x.value.env.any { it.toLowerCase() == env.split('~')[0].toLowerCase() }
+                            && !exclude_remotes.split(',').contains(x.key)
+                            && (include_remotes.equals('') || include_remotes.split(',').contains(x.key))
+            ).each {
+                def server_name = it.getKey()
+                def server_config = it.getValue()
+                def git_commit_id = ''
+                server_config.put_files(server_config).findAll(x -> x.is_fetch_git_properties?:false).each {
+                    def put_from = it.from
+                    if (put_from instanceof Task) put_from = put_from.archiveFile.get().asFile.path
+                    def process = "jar xf ${put_from} BOOT-INF/classes/git.properties".execute(null, file(put_from).parentFile)
+                    process.waitFor()
+                    def props = new Properties()
+                    file("$put_from/../BOOT-INF/classes/git.properties").withInputStream { stream -> props.load(stream) }
+                    git_commit_id = props.getProperty('git.commit.id', '')
+                }
+                def backup_version = git_commit_id.equals('') ? str_currentTime : "${str_currentTime}_${git_commit_id}"
+                backup_version = build_number.equals('Local') ? backup_version : "${backup_version}_${build_number}"
+                ssh.run {
+                    session(server_config.server) {
+                        out.withStyle(Style.Info).println "\n\tProc Remote [$server_name] ... \n"
+                        execute """
+                            set -e
+                            rm -rf ${server_config.app_home}/${remote_prepared_folder}
+                        """, logging: 'stdout'
+                        local_app_home_folders_recurse.each {
+                            def folder_use = file("${local_app_home}/${it}")
+                            if (is_first_time) {
+                                folder_use.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                                    def relativePath = local_app_home.relativePath(file)
+                                    def relativePath_parent = local_app_home.relativePath(file.getParentFile())
+                                    def is_exclude = exclude_app_files.contains(relativePath)
+                                    def is_exclude_folders_recurse = exclude_app_folders_recurse.any { relativePath.startsWith(it) } && !include_app_files.contains(relativePath)
+                                    def is_exclude_from_parent_folders = exclude_app_files_from_parent_folders.contains(relativePath_parent) && !include_app_files.contains(relativePath)
+                                    if (!is_exclude && !is_exclude_folders_recurse && !is_exclude_from_parent_folders) {
+                                        out.withStyle(Style.Info).println "put file to remote $server_name: $file --> ${server_config.app_home}/${relativePath}"
+                                        execute "mkdir -p ${server_config.app_home}/${relativePath_parent}", logging: 'stdout'
+                                        put from: file, into: "${server_config.app_home}/${relativePath}", logging: 'stdout'
+                                        execute "chmod u+x '${server_config.app_home}/${relativePath}'", logging: 'stdout'
+                                    }
+                                }
+                            }
+                        }
+                        if (is_first_time) {
+                            out.withStyle(Style.Info).println "put file to remote $server_name: ${local_app_home}/${env_file_name} --> ${server_config.app_home}/${env_file_name}"
+                            execute "mkdir -p ${server_config.app_home}", logging: 'stdout'
+                            put from: "${local_app_home}/${env_file_name}", into: "${server_config.app_home}", logging: 'stdout'
+                            // check remote env file format
+                            def is_endWith_lineSeparator = execute("if tail -c 1 ${server_config.app_home}/${env_file_name}  | grep -q '^\$'; then echo true; else echo false; fi", logging: 'none')
+                            if (!is_endWith_lineSeparator.toBoolean()) throw new GradleException("file ${env_file_name} must end with lineSeparator (最後一行必須要換行)！！")
+                            def env_check_content = execute("cat ${server_config.app_home}/${env_file_name}", logging: 'none').replace('\\' + System.lineSeparator(), '')
+                            env_check_content.split(System.lineSeparator()).each{ line ->
+                                if (!line.isEmpty() && !line.startsWith('#')) {
+                                    if (line.contains('=')) {
+                                        def (key, value) = line.trim().split('=', 2)
+                                        if (!value.startsWith('"') || !value.endsWith('"')) {
+                                            throw new GradleException("file ${env_file_name} have a value [$value] with no quote (\"), key = [$key]")
+                                        }
+                                    } else {
+                                        throw new GradleException("file ${env_file_name} have a line with no '=', line = [${line}]")
+                                    }
+                                }
+                            }
+                            server_config.put_files(server_config).findAll(x -> x.only_first_time?:false).each {
+                                def is_rename = it.is_rename?:false
+                                def is_into_app_home = it.is_into_app_home?:false
+                                def put_from = it.from
+                                def put_into = it.into
+                                if (put_from instanceof Task) put_from = put_from.archiveFile.get().asFile.path
+                                if (is_into_app_home) put_into = "${server_config.app_home}/$put_into"
+                                if (!is_rename) put_into = "${put_into}/" + file("${put_from}").name
+                                def fromFile = file(put_from)
+                                if (!is_rename && fromFile.isDirectory()) {
+                                    fromFile.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                                        def relativePath = fromFile.relativePath(file)
+                                        def targetPath = "$put_into/$relativePath"
+                                        out.withStyle(Style.Info).println "put file to remote $server_name: $file --> $targetPath"
+                                        def praent_dir = execute("dirname '${targetPath}'", logging: 'none')
+                                        execute "mkdir -p ${praent_dir}", logging: 'stdout'
+                                        put from: file, into: "${targetPath}", logging: 'stdout'
+                                        execute "chmod u+x '${targetPath}'", logging: 'stdout'
+                                    }
+                                } else {
+                                    out.withStyle(Style.Info).println "put file to remote $server_name: $put_from --> $put_into"
+                                    def praent_dir = execute("dirname '${put_into}'", logging: 'none')
+                                    execute "mkdir -p ${praent_dir}", logging: 'stdout'
+                                    put from: put_from, into: put_into, logging: 'stdout'
+                                    execute "chmod u+x '$put_into'", logging: 'stdout'
+                                }
+                            }
+                            def system_lineSeparator = System.lineSeparator()
+                            def env_content = execute("cat ${server_config.app_home}/${env_file_name}", logging: 'none').trim() + system_lineSeparator
+                            server_config.env_info(server_config).each {
+                                env_content = env_content.replaceAll("(^|${system_lineSeparator})${it.name}=\"(.|${system_lineSeparator})*?\"${system_lineSeparator}", system_lineSeparator)
+                            }
+                            def temp_env_file = java.nio.file.Files.createTempFile("${env_file_name}", "").toFile()
+                            temp_env_file.setText(env_content.replace(system_lineSeparator, '\n'), 'UTF-8')
+                            server_config.env_info(server_config).each {
+                                temp_env_file.append("${it.name}=\"${it.value}\"" + '\n', 'UTF-8')
+                            }
+                            put from: temp_env_file, into: "${server_config.app_home}/${env_file_name}", logging: 'stdout'
+                        } else {
+                            // check remote env file format
+                            def is_endWith_lineSeparator = execute("if tail -c 1 ${server_config.app_home}/${env_file_name}  | grep -q '^\$'; then echo true; else echo false; fi", logging: 'none')
+                            if (!is_endWith_lineSeparator.toBoolean()) throw new GradleException("file ${env_file_name} must end with lineSeparator (最後一行必須要換行)！！")
+                            def env_check_content = execute("cat ${server_config.app_home}/${env_file_name}", logging: 'none').replace('\\' + System.lineSeparator(), '')
+                            env_check_content.split(System.lineSeparator()).each{ line ->
+                                if (!line.isEmpty() && !line.startsWith('#')) {
+                                    if (line.contains('=')) {
+                                        def (key, value) = line.trim().split('=', 2)
+                                        if (!value.startsWith('"') || !value.endsWith('"')) {
+                                            throw new GradleException("file ${env_file_name} have a value [$value] with no quote (\"), key = [$key]")
+                                        }
+                                    } else {
+                                        throw new GradleException("file ${env_file_name} have a line with no '=', line = [${line}]")
+                                    }
+                                }
+                            }
+                        }
+                        server_config.put_files(server_config).findAll(x -> !(x.only_first_time?:false)).each {
+                            def is_rename = it.is_rename?:false
+                            def is_into_app_home = it.is_into_app_home?:false
+                            def put_from = it.from
+                            def put_into = it.into
+                            if (put_from instanceof Task) put_from = put_from.archiveFile.get().asFile.path
+                            if (is_into_app_home) put_into = "${server_config.app_home}/$put_into"
+                            if (!is_rename) put_into = "${put_into}/" + file("${put_from}").name
+                            def fromFile = file(put_from)
+                            if (!is_rename && fromFile.isDirectory()) {
+                                fromFile.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                                    def relativePath = fromFile.relativePath(file)
+                                    def targetPath = "$put_into/$relativePath"
+                                    out.withStyle(Style.Info).println "put file to remote $server_name: $file --> $targetPath"
+                                    def praent_dir = execute("dirname '${targetPath}'", logging: 'none')
+                                    execute "mkdir -p ${praent_dir}", logging: 'stdout'
+                                    put from: file, into: "${targetPath}", logging: 'stdout'
+                                    execute "chmod u+x '${targetPath}'", logging: 'stdout'
+                                }
+                            } else {
+                                out.withStyle(Style.Info).println "put file to remote $server_name: $put_from --> $put_into"
+                                def praent_dir = execute("dirname '${put_into}'", logging: 'none')
+                                execute "mkdir -p ${praent_dir}", logging: 'stdout'
+                                put from: put_from, into: put_into, logging: 'stdout'
+                                execute "chmod u+x '$put_into'", logging: 'stdout'
+                            }
+                        }
+                        execute """
+                            set -e
+                            mkdir -p ${server_config.app_home}/${remote_prepared_folder}
+                            cp ${server_config.app_home}/${env_file_name} ${server_config.app_home}/${remote_prepared_folder}
+                        """, logging: 'stdout'
+                        def system_lineSeparator = System.lineSeparator()
+                        def env_content = execute("cat ${server_config.app_home}/${remote_prepared_folder}/${env_file_name}", logging: 'none').trim() + system_lineSeparator
+                        server_config.env_info(server_config).findAll(x -> !(x.only_first_time?:false)).each {
+                            env_content = env_content.replaceAll("(^|${system_lineSeparator})${it.name}=\"(.|${system_lineSeparator})*?\"${system_lineSeparator}", system_lineSeparator)
+                        }
+                        def temp_env_file = java.nio.file.Files.createTempFile("${env_file_name}", "").toFile()
+                        temp_env_file.setText(env_content.replace(system_lineSeparator, '\n'), 'UTF-8')
+                        server_config.env_info(server_config).findAll(x -> !(x.only_first_time?:false)).each {
+                            temp_env_file.append("${it.name}=\"${it.value}\"" + '\n', 'UTF-8')
+                        }
+                        put from: temp_env_file, into: "${server_config.app_home}/${remote_prepared_folder}/${env_file_name}", logging: 'stdout'
+                        out.withStyle(Style.Info).println "\n\n"
+
+                        // backup
+                        execute "${server_config.bin_home}/backup.sh ${server_config.app_home} ${backup_version}", logging: 'stdout'
+                        out.withStyle(Style.Info).println "\n\n"
+                    }
+                }
+                // backup in jenkins (not include .env)
+                if (!build_number.equals('Local')) {
+                    server_config.put_files(server_config).findAll(x -> x.into.contains("${remote_prepared_folder}")).each {
+                        def put_from = it.from
+                        def is_rename = it.is_rename?:false
+                        def put_into = it.into
+                        if (put_from instanceof Task) put_from = put_from.archiveFile.get().asFile.path
+                        if (put_from.endsWith('.jar') || put_from.endsWith('.war')) {
+                            copy {
+                                from put_from
+                                into "${rootProject.projectDir}/backup/${backup_version}"
+                                if (is_rename) {
+                                    rename { put_into.split('/').last() }
+                                }
+                            }
+                        } else {
+                            def relativePath = it.into.replace("${remote_prepared_folder}", "")
+                            copy {
+                                from put_from
+                                if (is_rename) {
+                                    into "${rootProject.projectDir}/backup/${backup_version}/${server_name}${relativePath}/.."
+                                    rename { put_into.split('/').last() }
+                                } else {
+                                    into "${rootProject.projectDir}/backup/${backup_version}/${server_name}${relativePath}"
+                                }                            }
+                        }
+                    }
+                    // clean history version
+                    def history_version_list = file("${rootProject.projectDir}/backup").listFiles()
+                    if (history_version_list.size() > N_VERSION_KEEP) {
+                        history_version_list
+                                .sort { -it.lastModified() }
+                                .drop(N_VERSION_KEEP)
+                                .each { dir ->
+                                    println "Deleting old backup version: ${dir}"
+                                    dir.deleteDir() // 刪除目錄及其內容
+                                }
+                    }
+                }
+            }
+        }
+    }
+}
+
+task remote_start {
+    group = 'Deploy'
+    description = 'Start Remote Server'
+    doLast {
+        def system_prop = System.getProperties()
+        def env = system_prop.get('env', 'SIT')
+        def exclude_remotes = system_prop.get('exclude_remotes', '')
+        def include_remotes = system_prop.get('include_remotes', '')
+        def remote_start_mode = system_prop.get('remote_start_mode', 'Apply_New_Version')
+        def remote_start_rollback_version = system_prop.get('remote_start_rollback_version', '')
+        def deploymentFailed = false
+        def failed_list = []
+        if (deploy.enabled) {
+            deploy_remotes.findAll(x ->
+                    x.value.env.any { it.toLowerCase() == env.split('~')[0].toLowerCase() }
+                            && !exclude_remotes.split(',').contains(x.key)
+                            && (include_remotes.equals('') || include_remotes.split(',').contains(x.key))
+            ).each {
+                def server_name = it.getKey()
+                def server_config = it.getValue()
+                ssh.run {
+                    session(server_config.server) {
+                        def testUrl = "${server_config.api_test.protocol}://127.0.0.1:${server_config.api_test.port}${server_config.api_test.context}"
+                        out.withStyle(Style.Info).println "\n\n\ttest api url: $testUrl \n\n"
+                        try {
+                            if (remote_start_mode.equals('Apply_New_Version')) {
+                                out.withStyle(Style.Info).println "\n\n\tstart server on remote [$server_name] with mode [$remote_start_mode]\n\n"
+                                execute """
+                                    set -e
+                                    cd $server_config.bin_home
+                                    ./stop.sh $server_config.app_home
+                                    cp -r ${server_config.app_home}/${remote_prepared_folder}/. ${server_config.app_home}
+                                    ./run.sh $server_config.app_home
+                                    ./test.sh $testUrl
+                                """, logging: 'stdout'
+                            } else if (remote_start_mode.equals('Restart')) {
+                                out.withStyle(Style.Info).println "\n\n\tstart server on remote [$server_name] with mode [$remote_start_mode]\n\n"
+                                execute """
+                                    set -e
+                                    cd $server_config.bin_home
+                                    ./stop.sh $server_config.app_home
+                                    ./run.sh $server_config.app_home
+                                    ./test.sh $testUrl
+                                """, logging: 'stdout'
+                            } else if (remote_start_mode.equals('Rollback')) {
+                                out.withStyle(Style.Info).println "\n\n"
+                                out.withStyle(Style.Info).println "\tstart server on remote [$server_name] with mode [$remote_start_mode]"
+                                out.withStyle(Style.Info).println "\tRollback Version = [$remote_start_rollback_version]"
+                                out.withStyle(Style.Info).println "\n\n"
+                                execute """
+                                    set -e
+                                    cd $server_config.bin_home
+                                    ./stop.sh $server_config.app_home
+                                    ./switch.sh $server_config.app_home $remote_start_rollback_version
+                                    ./run.sh $server_config.app_home
+                                    ./test.sh $testUrl
+                                """, logging: 'stdout'
+                            } else {
+                                out.withStyle(Style.Failure).println "\n\n\t不支援的 remote_start_mode: [$remote_start_mode] \n\n"
+                                throw new GradleException("不支援的 remote_start_mode: [$remote_start_mode]")
+                            }
+                        } catch (Exception e) {
+                            deploymentFailed = true
+                            failed_list.add(server_name)
+                            out.withStyle(Style.Error).println "Deployment failed on server [${server_name}]: ${e.message}"
+                        }
+                    }
+                }
+            }
+            if (failed_list.size() > 0) {
+                out.withStyle(Style.Error).println "Deployment failed servers [${failed_list}]"
+            }
+            if (deploymentFailed) {
+                throw new GradleException("One or more deployments failed.")
+            }
+        }
+    }
+}
+
+task remote_stop {
+    group = 'Deploy'
+    description = 'Stop Remote Server'
+    doLast {
+        def system_prop = System.getProperties()
+        def env = system_prop.get('env', 'SIT')
+        def exclude_remotes = system_prop.get('exclude_remotes', '')
+        def include_remotes = system_prop.get('include_remotes', '')
+        if (deploy.enabled) {
+            deploy_remotes.findAll(x ->
+                    x.value.env.any { it.equalsIgnoreCase(env) }
+                            && !exclude_remotes.split(',').contains(x.key)
+                            && (include_remotes.equals('') || include_remotes.split(',').contains(x.key))
+            ).each {
+                def server_name = it.getKey()
+                def server_config = it.getValue()
+                ssh.run {
+                    session(server_config.server) {
+                        out.withStyle(Style.Info).println "\n\n\t(strict) stop server on remote $server_name \n\n"
+                        execute """
+                            set -e
+                            cd $server_config.bin_home
+                            sh ./stop.sh $server_config.app_home
+                        """, logging: 'stdout'
+                    }
+                }
+            }
+        }
+    }
+}
+
+task deploy {
+    group = 'Deploy'
+    description = 'Deploy to Remote Server'
+    def env = System.getProperty('env', 'SIT')
+    def is_JMH = env.endsWith('_JMH')
+    if (is_JMH) {
+        finalizedBy 'jmhJar', put_files
+        put_files.mustRunAfter 'jmhJar'
+    } else {
+        finalizedBy bootJar, put_files, remote_start
+        put_files.mustRunAfter bootJar
+        remote_start.mustRunAfter put_files
+    }
+}
+
+task put_files_first {
+    group = 'Deploy'
+    description = 'First Time Put Files to Remote Server'
+    finalizedBy put_files
+    doFirst {
+        System.setProperty("is_first_time", "true")
+    }
+}
+
+task deploy_first {
+    group = 'Deploy'
+    description = 'First Time Deploy to Remote Server'
+    finalizedBy deploy
+    doFirst {
+        System.setProperty("is_first_time", "true")
+    }
+}
+
+
