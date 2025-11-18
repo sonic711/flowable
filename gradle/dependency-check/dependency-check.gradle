@@ -1,0 +1,62 @@
+apply plugin: 'org.owasp.dependencycheck'
+
+dependencyCheck {
+    autoUpdate = false
+    failBuildOnCVSS = 30
+    formats = ['HTML', 'XML', 'CSV', 'JSON']
+    failOnError = false
+    suppressionFile = file("${rootProject.projectDir}/gradle/dependency-check/suppression.xml")
+    //scanConfigurations = ["runtime"]
+    analyzers {
+        experimentalEnabled = true
+        archiveEnabled = true
+        jarEnabled = true
+        centralEnabled = false
+        nexusEnabled = true
+        pyDistributionEnabled = false
+        pyPackageEnabled = false
+        rubygemsEnabled = false
+        opensslEnabled = false
+        nuspecEnabled = false
+        assemblyEnabled = false
+        cmakeEnabled = false
+        autoconfEnabled = true
+        composerEnabled = false
+        nodeEnabled = true
+        nodeAuditEnabled = false
+        cocoapodsEnabled = false
+        swiftEnabled = false
+    }
+
+    if (project.hasProperty('dependencyCheckJdbcUrl')) {
+        autoUpdate = false
+        data {
+            connectionString = dependencyCheckJdbcUrl
+            driver = dependencyCheckDriver
+            username = dependencyCheckUsername
+            password = dependencyCheckPassword
+        }
+    }
+}
+
+//check.dependsOn dependencyCheckAnalyze
+
+dependencyCheckAnalyze {
+    doFirst {
+        if (project.hasProperty('dependencyCheckJdbcUrl')) {
+            println "Use remote dependency check database. The conectionString of Dependency Check: $dependencyCheckJdbcUrl"
+        } else {
+            println 'Use local H2 dependency check database'
+        }
+    }
+}
+
+dependencyCheckAggregate {
+    doFirst {
+        if (project.hasProperty('dependencyCheckJdbcUrl')) {
+            println "Use remote dependency check database. The conectionString of Dependency Check: $dependencyCheckJdbcUrl"
+        } else {
+            println 'Use local H2 dependency check database'
+        }
+    }
+}

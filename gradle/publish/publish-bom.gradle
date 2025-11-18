@@ -1,0 +1,83 @@
+apply plugin: 'maven-publish'
+apply plugin: 'java-platform'
+
+javaPlatform {
+    allowDependencies()
+}
+
+publishing {
+    publications {
+        bom(MavenPublication) {
+            groupId = project.group
+            artifactId = 'platform-bom'
+            from components.javaPlatform
+            pom {
+                licenses {
+                    license {
+                        name = 'Commercial License'
+                        url = 'https://www.bluetechnology.com.tw/license'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'anthonywang'
+                        name = 'Anthony Wang'
+                        email = 'anthonywang@bluetechnology.com.tw'
+                    }
+                    developer {
+                        id = 'jimmywu'
+                        name = 'Jimmy Wu'
+                        email = 'jimmywu@bluetechnology.com.tw'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    developerConnection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    url = 'https://gitea.bluetouch.com.tw/bot_fsap/bot-grpc-model.git'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            allowInsecureProtocol = true
+            credentials {
+                username publishUsername
+                password publishPassword
+            }
+            if (project.version.endsWith('-SNAPSHOT')) {
+                url snapshotPublishUrl
+            } else {
+                url releasePublishUrl
+            }
+        }
+
+        if (project.hasProperty('snapshotPublishUrl2') && project.hasProperty('releasePublishUrl2')) {
+            maven {
+                allowInsecureProtocol = true
+                credentials {
+                    username publishUsername
+                    password publishPassword
+                }
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url snapshotPublishUrl2
+                } else {
+                    url releasePublishUrl2
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    constraints {
+        project.subprojects.each {
+            api it
+        }
+    }
+}
+
+publish.enabled = false
+publishBomPublicationToMavenRepository.enabled = false
+publishBomPublicationToMavenLocal.enabled = false
+generatePomFileForBomPublication.enabled = false

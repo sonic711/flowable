@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <gav regex="true">^com\.cwbase:logback-redis-appender:.*$</gav>
+        <cve>CVE-2017-5929</cve>
+    </suppress>
+
+    <suppress>
+        <gav regex="true">^io\.jsonwebtoken:jjwt:.*$</gav>
+        <cve>CVE-2018-1000539</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: hibernate-validator-6.2.0.Final.jar
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hibernate\.validator/hibernate\-validator@.*$</packageUrl>
+        <vulnerabilityName>CVE-2020-10693</vulnerabilityName>
+    </suppress>
+</suppressions>

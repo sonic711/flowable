@@ -1,0 +1,11 @@
+apply plugin: 'checkstyle'
+
+checkstyle {
+    toolVersion = '10.18.1'
+    sourceSets = [sourceSets.main]
+    maxWarnings = 0
+    ignoreFailures = true
+    configFile file("${rootDir}/gradle/checkstyle/checkstyle.xml")
+}
+
+

@@ -40,6 +40,7 @@ processResources {
                 include("application.yml")
                 include("application-actuator.yml")
                 include("application-eureka.yml")
+                include("application-info.yml")
             }
         }
     }

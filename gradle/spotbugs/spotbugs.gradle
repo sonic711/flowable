@@ -1,0 +1,22 @@
+apply plugin: "com.github.spotbugs"
+
+
+spotbugs {
+    toolVersion = '4.8.6'
+    ignoreFailures = true
+    showProgress = false
+    excludeFilter = file("${rootProject.projectDir}/gradle/spotbugs/exclude.xml")
+    reportLevel = "high"
+}
+
+
+spotbugsMain {
+    reports {
+        xml.enabled true
+        html.enabled true
+    }
+}
+
+dependencies {
+    spotbugsSlf4j  "org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1"
+}

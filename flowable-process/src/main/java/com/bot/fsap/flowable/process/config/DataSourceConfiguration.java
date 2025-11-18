@@ -9,7 +9,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 
 @Configuration
-public class DataSourceConfiguration1 {
+public class DataSourceConfiguration {
 
     @Value("${spring.datasource.url}")
     String dbUrl;

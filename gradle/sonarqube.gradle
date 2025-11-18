@@ -1,0 +1,22 @@
+apply plugin: 'org.sonarqube'
+sonarqube {
+    properties {
+        property 'sonar.projectKey', "${projectKey}-${gitBranch}"
+        property 'sonar.projectName', "${rootProject.name} (${gitBranch}) (${project.version})"
+        property 'sonar.projectDescription', "${project.description}"
+        property 'sonar.sourceEncoding', 'UTF-8'
+
+        //property 'sonar.jacoco.reportPaths', 'build/reports/jacoco/jacocoAllTestReport/html'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/**/*.xml'
+        property 'sonar.dependencyCheck.htmlReportPath', "$rootProject.projectDir/common-boot-server/boot-server/build/reports/dependency-check-report.html"
+        property 'sonar.dependencyCheck.jsonReportPath', "$rootProject.projectDir/common-boot-server/boot-server/build/reports/dependency-check-report.json"
+        property 'sonar.dependencyCheck.xmlReportPath', "$rootProject.projectDir/common-boot-server/boot-server/build/reports/dependency-check-report.xml"
+        property 'sonar.exclusions', '**/*Generated.java,**/*.html,**/*.css,**/*.png,**/*.jpg,**/*.JPG'
+        property 'sonar.scm.provider', 'git'
+        property 'sonar.java.source', jdkVersion
+        property 'sonar.coverage.exclusions', '**/*Generated.java,**/*.html,**/*.css,**/*.png,**/*.jpg,**/*.JPG'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/jacocoAllTestReport/jacocoAllTestReport.xml'
+        property 'sonar.java.checkstyle.reportPaths', 'build/reports/checkstyle/main.xml'
+        property 'sonar.java.spotbugs.reportPaths', 'build/reports/spotbugs/main.xml'
+    }
+}

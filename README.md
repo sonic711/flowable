@@ -49,7 +49,7 @@
 
 ### flowable-process 模組
 
-- **資料來源**：`DataSourceConfiguration1` 直接使用 `spring.datasource.*` 參數建立 HikariDataSource，並設定連線池大小（最大
+- **資料來源**：`DataSourceConfiguration` 直接使用 `spring.datasource.*` 參數建立 HikariDataSource，並設定連線池大小（最大
   50 / 最少閒置 5 / Idle 600s / MaxLifetime 1800s）。
 - **引擎客製化**：`ProcessEngineConfiguration` 透過 `EngineConfigurationConfigurer<SpringProcessEngineConfiguration>` 將
   `flowable.process.database-schema-update`、`async-executor-activate`、`history-level` 等設定值（預設來自

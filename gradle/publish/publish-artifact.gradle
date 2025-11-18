@@ -1,0 +1,186 @@
+apply plugin: 'maven-publish'
+
+task sourcesJar(type: Jar) {
+    description = 'Creates sources JAR.'
+    archiveClassifier = 'sources'
+    from project.sourceSets.main.allSource
+}
+
+artifacts {
+    //archives war
+    //archives bootWar
+    archives jar
+    archives bootJar
+    archives sourcesJar
+}
+
+publishing {
+    publications {
+        // for deployable war file
+        webApp(MavenPublication) {
+//            artifact(war) {
+//                classifier 'deployable'
+//                extension 'war'
+//            }
+            artifact(bootJar) {
+                classifier 'bootable'
+                extension 'jar'
+            }
+//            artifact(bootWar) {
+//                classifier 'bootable'
+//                extension 'war'
+//            }
+            // if preferring to publish source jar, uncomment the line below
+//            artifact(sourcesJar)
+            pom {
+                licenses {
+                    license {
+                        name = 'Commercial License'
+                        url = 'https://www.bluetechnology.com.tw/license'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'anthonywang'
+                        name = 'Anthony Wang'
+                        email = 'anthonywang@bluetechnology.com.tw'
+                    }
+                    developer {
+                        id = 'jimmywu'
+                        name = 'Jimmy Wu'
+                        email = 'jimmywu@bluetechnology.com.tw'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    developerConnection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    url = 'https://gitea.bluetouch.com.tw/bot_fsap/bot-grpc-model.git'
+                }
+            }
+        }
+        // for jar file
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                licenses {
+                    license {
+                        name = 'Commercial License'
+                        url = 'https://www.bluetechnology.com.tw/license'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'anthonywang'
+                        name = 'Anthony Wang'
+                        email = 'anthonywang@bluetechnology.com.tw'
+                    }
+                    developer {
+                        id = 'jimmywu'
+                        name = 'Jimmy Wu'
+                        email = 'jimmywu@bluetechnology.com.tw'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    developerConnection = 'scm:git:ssh://git@gitea.bluetouch.com.tw:222/BOT/fsap-model.git'
+                    url = 'https://gitea.bluetouch.com.tw/bot_fsap/bot-grpc-model.git'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            allowInsecureProtocol = true
+            credentials {
+                username publishUsername
+                password publishPassword
+            }
+            if (project.version.endsWith('-SNAPSHOT')) {
+                url snapshotPublishUrl
+            } else {
+                url releasePublishUrl
+            }
+        }
+
+        if (project.hasProperty('snapshotPublishUrl2') && project.hasProperty('releasePublishUrl2')) {
+            maven {
+                name 'maven2'
+                allowInsecureProtocol = true
+                credentials {
+                    username publishUsername
+                    password publishPassword
+                }
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url snapshotPublishUrl2
+                } else {
+                    url releasePublishUrl2
+                }
+            }
+        }
+    }
+}
+
+publish.enabled = false
+
+// enable publish webapp artifacts to maven repository by default
+publishWebAppPublicationToMavenRepository.enabled = false
+publishWebAppPublicationToMaven2Repository.enabled = false
+publishWebAppPublicationToMavenLocal.enabled = false
+generatePomFileForWebAppPublication.enabled = false
+
+// enable publish mavenJava artifacts to maven repository by default
+publishMavenJavaPublicationToMavenRepository.enabled = true
+publishMavenJavaPublicationToMaven2Repository.enabled = true
+publishMavenJavaPublicationToMavenLocal.enabled = true
+generatePomFileForMavenJavaPublication.enabled = true
+
+task install(dependsOn: publishToMavenLocal)
+
+
+// TODO should be more concise
+// ref: https://stackoverflow.com/questions/17281927/how-to-make-gradle-generate-a-valid-pom-xml-file-at-the-root-of-a-project-for-ma
+
+tasks.register("generatePom") {
+
+//    if (generatePomFileForWebAppPublication.enabled) {
+//        def publication = publishing.publications.webApp
+//        def generatePom = tasks.named("generatePomFileFor${publication.name.capitalize()}Publication")
+//        dependsOn(generatePom)
+//        // generate to sub module directory
+//        // def output = rootProject.file("${publication.artifactId}-${publication.version}.pom")
+//        def output = project.file("pom.xml")
+//        outputs.file(output)
+//        doLast { output.bytes = generatePom.get().destination.bytes }
+//    }
+
+    if (generatePomFileForMavenJavaPublication.enabled) {
+        def publication = publishing.publications.mavenJava
+        def generatePom = tasks.named("generatePomFileFor${publication.name.capitalize()}Publication")
+        dependsOn(generatePom)
+        // generate to sub module directory
+        // def output = rootProject.file("${publication.artifactId}-${publication.version}.pom")
+        def output = project.file("pom.xml")
+        outputs.file(output)
+        doLast { output.bytes = generatePom.get().destination.bytes }
+    }
+
+}
+
+tasks.register("generatePomToRoot") {
+//    if (generatePomFileForWebAppPublication.enabled) {
+//        def publication = publishing.publications.webApp
+//        def generatePom = tasks.named("generatePomFileFor${publication.name.capitalize()}Publication")
+//        dependsOn(generatePom)
+//        def output = rootProject.file("pom.xml")
+//        outputs.file(output)
+//        doLast { output.bytes = generatePom.get().destination.bytes }
+//    }
+    if (generatePomFileForMavenJavaPublication.enabled) {
+        def publication = publishing.publications.mavenJava
+        def generatePom = tasks.named("generatePomFileFor${publication.name.capitalize()}Publication")
+        dependsOn(generatePom)
+        def output = rootProject.file("pom.xml")
+        outputs.file(output)
+        doLast { output.bytes = generatePom.get().destination.bytes }
+    }
+}
