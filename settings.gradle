@@ -1,2 +1,2 @@
 rootProject.name = 'flowable'
-include 'web', 'boot', 'flowable-process'
+include 'web', 'boot:flowable', 'flowable-process'

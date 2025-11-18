@@ -41,8 +41,7 @@ plugins {
 }
 
 group = 'com.bot'
-version = '0.99-SNAPSHOT'
-description = 'flowable'
+project.version = '0.99-SNAPSHOT'
 
 java {
     toolchain {
@@ -85,7 +84,8 @@ allprojects {
 }
 
 subprojects {
-
+    group = rootProject.group
+    version = rootProject.version
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
@@ -122,4 +122,3 @@ subprojects {
 // 根目錄不需要包jar
 bootJar.enabled = false
 jar.enabled = false
-
