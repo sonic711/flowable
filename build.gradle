@@ -82,8 +82,16 @@ allprojects {
         allowedLicensesFile = new File("$rootProject.projectDir/gradle/license/allowed-licenses.json")
     }
 }
-
+ext {
+    gitRevision = "git rev-parse HEAD".execute().text.trim()
+    gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+    gitUrl = "git remote get-url --push origin".execute().text.trim()
+    gitUserEmail = "git config user.email".execute().text.trim()
+    gitUserName = "git config user.name".execute().text.trim()
+    jdkVersion = JavaLanguageVersion.of(21)
+}
 subprojects {
+
     group = rootProject.group
     version = rootProject.version
     apply plugin: 'java'
