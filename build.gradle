@@ -1,3 +1,10 @@
+import com.github.jk1.license.filter.LicenseBundleNormalizer
+import com.github.jk1.license.importer.XmlReportImporter
+import com.github.jk1.license.render.InventoryHtmlReportRenderer
+import com.github.jk1.license.render.JsonReportRenderer
+import com.github.jk1.license.render.SimpleHtmlReportRenderer
+import com.github.jk1.license.render.XmlReportRenderer
+
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -49,6 +56,33 @@ configurations {
     }
 }
 
+apply from: "$rootProject.projectDir/gradle/sonarqube.gradle"
+apply from: "$rootProject.projectDir/gradle/dependency-check/dependency-check.gradle"
+
+allprojects {
+    apply plugin: 'project-report'
+    apply plugin: 'com.github.jk1.dependency-license-report'
+    htmlDependencyReport {
+        projects = project.allprojects
+    }
+
+    licenseReport {
+        outputDir = "$projectDir/build/reports/dependency-license"
+        projects = [project] + project.subprojects
+        configurations = ['testCompileClasspath', 'testRuntimeClasspath']
+        excludeGroups = [group]
+        excludes = ['moduleGroup:moduleName']
+        excludeOwnGroup = true
+        excludeBoms = false
+        renderers = [new XmlReportRenderer('third-party-libs.xml', 'Back-End Libraries')]
+        renderers += [new InventoryHtmlReportRenderer('third-party-libs.html', 'Back-End Libraries')]
+        renderers += [new SimpleHtmlReportRenderer('third-party-libs-simple.html')]
+        renderers += [new JsonReportRenderer('third-party-libs.json')]
+        importers = [new XmlReportImporter("For Test", new File("$rootProject.projectDir/gradle/license", "externalDependencies.xml"))]
+        filters = [new LicenseBundleNormalizer()]
+        allowedLicensesFile = new File("$rootProject.projectDir/gradle/license/allowed-licenses.json")
+    }
+}
 
 subprojects {
 
