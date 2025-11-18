@@ -38,9 +38,7 @@ processResources {
         main {
             resources {
                 // 過濾 resources
-                include("application.yml")
                 include("application-actuator.yml")
-                include("application-eureka.yml")
                 include("application-info.yml")
                 include ("META-INF/*")
             }
@@ -49,6 +47,9 @@ processResources {
     def environments = ['local']
 
     if (environments.contains(activeProfile)) {
+        from "src/main/resources/config/${activeProfile}/application.yml"
+        from "src/main/resources/config/${activeProfile}/application-eureka.yml"
+        from "src/main/resources/config/${activeProfile}/adapter.yml"
         from "src/main/resources/log4j2.yml"
         into 'src/main/resources/'
     }

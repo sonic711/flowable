@@ -1,7 +1,7 @@
 eureka:
   client:
     # 是否註冊 Eureka
-    registerWithEureka: false
+    registerWithEureka: true
     # 是否獲取 Eureka 註冊資訊
     fetchRegistry: true
     # Eureka Server Location
