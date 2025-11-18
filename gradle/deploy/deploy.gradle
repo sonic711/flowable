@@ -49,7 +49,7 @@ def deploy_remotes = [
             api_test: [
                 protocol: 'http',
                 port: 8081,
-                context: '/ncb-server'
+                context: '/'
             ]
         ],
 
