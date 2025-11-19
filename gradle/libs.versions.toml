@@ -5,9 +5,17 @@ java = "21"
 # BlueTech 版本
 blue-tech = "0.99-SNAPSHOT"
 model-grpc-common = "1.11.1"
+
 # Spring Boot 版本
 spring-boot = "3.5.6"
 spring-dependency-management = "1.1.7"
+
+# Undertow 版本
+undertow = "2.3.19.Final"
+
+# Jakarta
+jakarta-servlet-api = "6.1.0"
+jakarta-validation-api = "3.1.0"
 
 # Flowable 版本
 flowable = "7.2.0"
@@ -49,6 +57,14 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+
+# Undertow
+undertow-servlet = { module = "io.undertow:undertow-servlet", version.ref = "undertow" }
+undertow-core = { module = "io.undertow:undertow-core", version.ref = "undertow" }
+
+# Jakarta
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "jakarta-servlet-api" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation-api" }
 
 # Flowable 流程引擎
 flowable-spring-boot-starter-process = { module = "org.flowable:flowable-spring-boot-starter-process", version.ref = "flowable" }
@@ -93,6 +109,12 @@ blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin", "
 
 # Spring Web 相關
 spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-security"]
+
+# Undertow
+undertow = ["undertow-core", "undertow-servlet"]
+
+# Jakarta
+jakarta = ["jakarta-servlet-api", "jakarta-validation-api"]
 
 # 測試套件
 test-suite = ["junit-jupiter", "junit-jupiter-engine", "mockito-core", "mockito-junit-jupiter", "assertj-core", "spring-boot-starter-test"]

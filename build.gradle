@@ -4,6 +4,7 @@ import com.github.jk1.license.render.InventoryHtmlReportRenderer
 import com.github.jk1.license.render.JsonReportRenderer
 import com.github.jk1.license.render.SimpleHtmlReportRenderer
 import com.github.jk1.license.render.XmlReportRenderer
+import org.gradle.api.internal.provider.DefaultProvider
 
 buildscript {
     repositories {
@@ -88,7 +89,7 @@ ext {
     gitUrl = "git remote get-url --push origin".execute().text.trim()
     gitUserEmail = "git config user.email".execute().text.trim()
     gitUserName = "git config user.name".execute().text.trim()
-    jdkVersion = JavaLanguageVersion.of(21)
+    jdkVersion = libs.versions.java as DefaultProvider
 }
 subprojects {
 

@@ -6,9 +6,14 @@ apply from: "$rootProject.projectDir/gradle/logging/logging.gradle"
 apply from: "$rootProject.projectDir/gradle/deploy/deploy.gradle"
 
 dependencies {
+    // 引入web模組
     implementation project(':web')
+    // 引入flowable模組
     implementation project(':flowable-process')
-    implementation(libs.bundles.blue.tech.bundle)
+    // 引入BT內部模組
+    implementation libs.bundles.blue.tech.bundle
+    // 引入undertow
+    implementation libs.bundles.undertow
 }
 
 def activeProfile = System.getProperty("env", project.hasProperty("profile") ? project.property("profile") : "local")
@@ -40,7 +45,7 @@ processResources {
                 // 過濾 resources
                 include("application-actuator.yml")
                 include("application-info.yml")
-                include ("META-INF/*")
+                include("META-INF/*")
             }
         }
     }

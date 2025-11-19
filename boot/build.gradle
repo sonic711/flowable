@@ -2,3 +2,13 @@ bootJar {
     archiveFileName.set('flowable.jar')
     mainClass.set('com.bot.fsap.flowable.BootApplication')
 }
+
+subprojects {
+    // 將Tomcat相關套件排除
+    configurations.configureEach {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    dependencies {
+        compileOnly(libs.bundles.jakarta)
+    }
+}

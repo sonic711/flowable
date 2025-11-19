@@ -185,15 +185,6 @@ Configutation:
         level: INFO
       - name: org.springframework.boot.context.config.ConfigDataEnvironment
         level: TRACE
-      # oauth and keycloak
-      - name: org.keycloak
-        level: DEBUG
-      - name: org.keycloak.adapters.OAuthRequestAuthenticator
-        level: TRACE
-      - name: org.keycloak.adapters.AdapterUtils
-        level: TRACE
-      - name: org.keycloak.adapters.PreAuthActionsHandler
-        level: DEBUG
       # hibernate
       - name: org.hibernate
         level: INFO
@@ -210,7 +201,7 @@ Configutation:
         level: DEBUG
       # undertow
       - name: io.undertow
-        level: INFO
+        level: DEBUG
       # resilience4j
       - name: io.github.resilience4j
         level: DEBUG
@@ -239,22 +230,12 @@ Configutation:
         level: DEBUG
       - name: liquibase
         level: DEBUG
-      # testcontainers
-      - name: playtika.testcontainer
-        level: TRACE
-      - name: org.testcontainer
-        level: INFO
-      - name: tc
-        level: DEBUG
       - name: org.flowable
         level: TRACE
       - name: oracle.jdbc
         level: TRACE
       - name: com.zaxxer.hikari
         level: TRACE
-      # spring boot admin
-      - name: de.codecentric.boot.admin
-        level: INFO
       # log agent
       - name: JmsSysInfoLogger
         level: DEBUG
