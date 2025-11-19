@@ -1,5 +1,7 @@
 package com.bot.fsap.flowable.web.security;
 
+import java.time.Instant;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -8,6 +10,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * ====================================================================== <br>
@@ -31,8 +35,27 @@ public class SecurityConfig {
 				.httpBasic(Customizer.withDefaults())  // 或 .httpBasic(httpBasic -> httpBasic.realmName("Flowable IDM"))
 				// 關掉 form login（如果不用傳統登入頁）
 				.formLogin(AbstractHttpConfigurer::disable)
-				// Session 設定：Flowable IDM 預設用 session，設 ALWAYS 以確保 Basic Auth 能存 session
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
+				// Session 設定：Flowable IDM 預設用 session，設 ALWAYS 確保 Basic Auth 能存 session/ STATELESS 則不存 session
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))//
+				.authorizeHttpRequests(auth -> auth//
+						.anyRequest().authenticated()   // 所有 API 都需要登入
+				).exceptionHandling(exception -> exception//
+						.authenticationEntryPoint((request, response, authException) -> {
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							response.setContentType("application/json;charset=UTF-8");
+							response.getWriter().write("""
+									{
+									  "timestamp": "%s",
+									  "status": 401,
+									  "error": "Unauthorized",
+									  "message": "需要認證才能存取此資源",
+									  "path": "%s"
+									}
+									""".formatted(//
+									Instant.now().toString(),//
+									request.getRequestURI()//
+							));
+						}));
 
 		return http.build();
 	}
