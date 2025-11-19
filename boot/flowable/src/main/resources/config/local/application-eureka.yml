@@ -3,7 +3,7 @@ eureka:
     # 是否註冊 Eureka
     registerWithEureka: false
     # 是否獲取 Eureka 註冊資訊
-    fetchRegistry: true
+    fetchRegistry: false
     # Eureka Server Location
     serviceUrl:
       defaultZone: http://172.17.24.57:8761/fsap-service-monitor/eureka/,http://172.17.24.57:8762/fsap-service-monitor/eureka/

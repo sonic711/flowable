@@ -78,6 +78,19 @@ Configutation:
               glob: "*/${APPLICATION_NAME}_log_agent_client_process_*.log.gz"
             IfLastModified:
               age: "30d"
+      - name: HTTP-EXCHANGE
+        ignoreExceptions: false
+        fileName: ${LOG_PATH}/${APPLICATION_NAME}_http_exchange.log
+        filePattern: ${LOG_PATH}/%d{yyyyMMdd}/${APPLICATION_NAME}_http_exchange_%d{yyyyMMddHH}.log.gz
+        PatternLayout:
+          charset: "UTF-8"
+          pattern: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n'
+        Policies:
+          TimeBasedTriggeringPolicy:
+            modulate: true
+            interval: 1
+        DefaultRolloverStrategy:
+          max: 720
   Loggers:
     Root:
       level: INFO
@@ -220,6 +233,11 @@ Configutation:
         additivity: true
         AppenderRef:
           - ref: P6SPY
+      - name: HttpExchangeLogger
+        level: INFO
+        additivity: false
+        AppenderRef:
+          - ref: HTTP-EXCHANGE
       - name: org.springframework.http.server.reactive
         level: DEBUG
       - name: org.springframework.web.reactive

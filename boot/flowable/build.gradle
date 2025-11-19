@@ -45,6 +45,7 @@ processResources {
                 // 過濾 resources
                 include("application-actuator.yml")
                 include("application-info.yml")
+                include("application-undertow.yml")
                 include("META-INF/*")
             }
         }
