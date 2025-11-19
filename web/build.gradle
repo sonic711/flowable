@@ -2,7 +2,7 @@ description = 'flowable'
 
 dependencies {
     implementation libs.bundles.spring.web
-    compileOnly libs.lombok
+    implementation libs.swagger
 }
 
 bootRun {

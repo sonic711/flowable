@@ -6,7 +6,7 @@ Configutation:
   Properties:
     Property:
       - name: BASE_PATH
-        value: ${sys:BASE_PATH:-/app/fsap/log}
+        value: ${sys:BASE_PATH:-/Users/sonic711/app/fsap/log}
       - name: APPLICATION_NAME
         value: ${sys:APPLICATION_NAME:-flowable}
       - name: LOG_PATH

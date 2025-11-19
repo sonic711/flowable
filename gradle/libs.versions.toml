@@ -37,7 +37,7 @@ slf4j = "2.0.17"
 flogger = "0.9"
 
 # API 文件版本
-springdoc = "2.8.13"
+springdoc = "2.8.14"
 
 # 工具庫版本
 jackson = "2.19.2"
@@ -77,6 +77,8 @@ h2-database = { module = "com.h2database:h2", version.ref = "h2" }
 oracle-jdbc-driver = { module = "com.oracle.database.jdbc:ojdbc11" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
 
+# Swagger
+swagger = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 # 測試框架（版本由 Spring Boot BOM 管理）
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
