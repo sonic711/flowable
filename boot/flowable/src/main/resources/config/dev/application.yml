@@ -3,7 +3,7 @@ spring:
   application:
     name: flowable
   profiles:
-    include: eureka,actuator,info,flowable
+    include: eureka,actuator,info,flowable,undertow
   config:
     import: adapter.yml
   # DataSource
