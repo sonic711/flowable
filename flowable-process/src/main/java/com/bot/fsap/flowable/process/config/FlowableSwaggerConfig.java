@@ -1,7 +1,10 @@
 package com.bot.fsap.flowable.process.config;
 
+import java.util.List;
+
 import org.flowable.rest.service.api.RestResponseFactory;
 import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +14,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 /**
  * ====================================================================== <br>
@@ -29,6 +36,9 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 @ComponentScan(basePackages = { "org.flowable.rest.service.api" })
 public class FlowableSwaggerConfig {
 
+	@Value("${server.port}")
+	private String port;
+
 	@Bean
 	public RestResponseFactory restResponseFactory(ObjectMapper objectMapper) {
 		return new RestResponseFactory(objectMapper);
@@ -36,7 +46,36 @@ public class FlowableSwaggerConfig {
 
 	@Bean
 	public OpenAPI customOpenAPI() {
+		String flowableDescription = """
+					Flowable 群組說明：
+					- Flowable-Definition：以 Flowable Repository REST 為主，提供流程定義、部署與模型（Modeler）查詢，URI 會被自動補成 `/process-api/repository/**`。
+					- Flowable-Runtime：對應 Runtime REST，涵蓋流程執行、待辦任務、執行緒與流程變數，實際路徑為 `/process-api/runtime/**`。
+					- Flowable-History：查詢歷史流程與任務資料，包括變數快照與活動紀錄，路徑 `/process-api/history/**`。
+					- Flowable-Management：引擎維運 API，例如作業排程、死信、資料表狀態與引擎屬性，以 `/process-api/management/**` 提供。
+					- Flowable-Identity：使用者、群組與 IDM 延伸 API，啟用 IDM Starter 後可透過 `/process-api/identity/**` 或 `/process-api/idm-api/**` 管理帳號。
+					- My Application：專供自訂 Controller，預設排除 Flowable 官方 package，可逐步納入企業 API（無 `/process-api` 前綴）。
+					Flowable 平台 Swagger UI 使用說明：
+					1. 入口：`/swagger-ui/index.html`，Flowable REST 會自動補上 `/process-api` 前綴，My Application group 則維持實際路徑。
+					2. 認證：按下 `Authorize` 後輸入 basic auth 帳密（預設 `rest-admin / test`，可在 `application-flowable.yml` 覆寫）。
+					3. 呼叫流程：展開 operation → `Try it out` → 填參數 → `Execute`，Swagger 會帶入 Authorization header，並由 `RequestResponseLoggingFilter` 記錄到 `${BASE_PATH}/flowable_http_exchange.log`。
+					4. 更多細節請見 `README.md` 的「Swagger 頁面使用說明」。
+				""";
+
+		List<Server> servers = List.of(//
+				new Server().url("http://172.17.24.79:" + port)//
+						.description("DEV（flowuser@172.17.24.79:/app/fsap/flowable），供整合測試之用"));
+
 		return new OpenAPI()//
+				.info(new Info()//
+						.title("FSAP Flowable Process API")//
+						.summary("Flowable REST 與 FSAP 自訂 API 的統一入口")//
+						.version("2025.11")//
+						.description(flowableDescription)//
+						.contact(new Contact().name("Flowable Platform Team")//
+								.url("https://www.bluetechnology.com.tw"))//
+						.license(new License().name("BlueTechnology Internal Use Only")//
+								.url("https://www.bluetechnology.com.tw/license")))//
+				.servers(servers)//
 				// 1. 定義認證機制 (Components)
 				.components(new Components()//
 						.addSecuritySchemes("basicAuth", // 這個名稱可以自訂
