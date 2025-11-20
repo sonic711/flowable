@@ -25,3 +25,10 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: true
+
+# Spring Doc 正式環境請關閉
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

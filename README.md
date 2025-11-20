@@ -1,6 +1,6 @@
 # Flowable 平台程式與架構說明
 
-本文件同步 `fsap/poc/flowable` 目前的程式碼（HEAD `996499cc`，develop 分支），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。原 `FLOWABLE_PLATFORM.md`
+本文件同步 `fsap/poc/flowable` 目前的程式碼（HEAD `996499cc`，develop 分支），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。
 的產品願景與長期需求已併入第 11 節，方便集中維護。
 
 ## 1. 專案概覽
@@ -19,7 +19,7 @@
 | 語言/框架      | Java 21、Spring Boot 3.5.6                            | `gradle/libs.versions.toml` 由 toolchain 鎖定 JDK，並使用 Spring Dependency Management 插件。        |
 | BPM/工作流    | Flowable 7.2.0                                       | 透過 `flowable-spring-boot-starter` + REST/Actuator starter 整合。                              |
 | Web Server | Undertow 2.3.19.Final                                | 於 `boot:flowable` 引入，並排除 Spring Boot 預設 Tomcat。                                            |
-| API 文件      | Springdoc OpenAPI 2.8.14 + Swagger UI                 | `web` 模組新增 `libs.swagger`，自動產生 `/v3/api-docs` 與 `/swagger-ui/**` 以便檢視 Flowable REST。        |
+| API 文件     | Springdoc OpenAPI 2.8.14 + Swagger UI                | `web` 模組新增 `libs.swagger`，自動產生 `/v3/api-docs` 與 `/swagger-ui/**` 以便檢視 Flowable REST。       |
 | 日誌         | Log4j2 2.25.1 + 自訂 logging.gradle                    | 所有模組排除 `spring-boot-starter-logging`，集中於 `boot/flowable/src/main/resources/log4j2.yml` 管理。 |
 | 企業依賴       | `com.bot:fsap-*`                                     | 由 `libs.bundles.blue.tech.bundle` 提供 Dispatcher Client、監控插件等。                              |
 | 檢測掃描       | SpotBugs、Checkstyle、OWASP Dependency Check、SonarQube | 已於 root `build.gradle` 及 `gradle/*` 中預設。                                                   |
@@ -48,7 +48,7 @@ flowable/
 ├── web                         # HTTP/安全/記錄
 ├── gradle                      # 共用 script：logging、deploy、scan、publish…
 ├── Jenkinsfile                 # CI/CD pipeline
-└── README.md                   # 本文件（含原 FLOWABLE_PLATFORM.md backlog）
+└── README.md                   # 本文件
 ```
 
 `settings.gradle` 指定 `include 'web', 'boot:flowable', 'flowable-process'`；根專案 jar/bootJar 關閉，僅子模組產出工件。
@@ -150,17 +150,17 @@ flowable/
 
 ## 7. 組態檔一覽
 
-| 檔案                                                                         | 內容重點                                                                                                     |
-|----------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `boot/flowable/src/main/resources/config/<profile>/application.yml`        | Profiles include (`eureka,actuator,info,flowable,undertow`)、Oracle datasource、JPA 設定、`server.port=8081`。 |
-| `boot/flowable/src/main/resources/config/<profile>/adapter.yml`            | BT Bridge Dispatcher/nebula adapter 參數及靜態 host 列表。                                                       |
-| `boot/flowable/src/main/resources/config/<profile>/application-eureka.yml` | Eureka 註冊、心跳、metadata，將 `grpc.server.port` 透過 metadata 對外暴露。                                             |
-| `boot/flowable/src/main/resources/application-actuator.yml`                | Actuator endpoint 曝光、健康檢查細節、管理權限。                                                                        |
-| `boot/flowable/src/main/resources/application-info.yml`                    | 由 Token 置換輸出 build number、gitRevision、gitBranch、version 等。                                               |
-| `boot/flowable/src/main/resources/application-undertow.yml`                | Buffer/Thread/Timeout/access log 設定，確保 Undertow tuning 可被 profile include。                               |
+| 檔案                                                                         | 內容重點                                                                                                                        |
+|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `boot/flowable/src/main/resources/config/<profile>/application.yml`        | Profiles include (`eureka,actuator,info,flowable,undertow`)、Oracle datasource、JPA 設定、`server.port=8081`。                    |
+| `boot/flowable/src/main/resources/config/<profile>/adapter.yml`            | BT Bridge Dispatcher/nebula adapter 參數及靜態 host 列表。                                                                          |
+| `boot/flowable/src/main/resources/config/<profile>/application-eureka.yml` | Eureka 註冊、心跳、metadata，將 `grpc.server.port` 透過 metadata 對外暴露。                                                                |
+| `boot/flowable/src/main/resources/application-actuator.yml`                | Actuator endpoint 曝光、健康檢查細節、管理權限。                                                                                           |
+| `boot/flowable/src/main/resources/application-info.yml`                    | 由 Token 置換輸出 build number、gitRevision、gitBranch、version 等。                                                                  |
+| `boot/flowable/src/main/resources/application-undertow.yml`                | Buffer/Thread/Timeout/access log 設定，確保 Undertow tuning 可被 profile include。                                                  |
 | `boot/flowable/src/main/resources/log4j2.yml`                              | Console/Application/JMS/Log-agent/HTTP exchange appender，`BASE_PATH` 預設 `/Users/sonic711/app/fsap/log`，可用 `-DBASE_PATH` 覆蓋。 |
-| `flowable-process/src/main/resources/application-flowable.yml`             | Flowable schema、async executor、history level、REST/IDM、admin user/default pw。                             |
-| `flowable-process/src/main/resources/processes/simple.bpmn20.xml`          | 範例 BPMN，提供表單欄位與中文說明。                                                                                     |
+| `flowable-process/src/main/resources/application-flowable.yml`             | Flowable schema、async executor、history level、REST/IDM、admin user/default pw。                                                |
+| `flowable-process/src/main/resources/processes/simple.bpmn20.xml`          | 範例 BPMN，提供表單欄位與中文說明。                                                                                                        |
 
 > `boot` 模組的 `processResources` 只會把 `application*.yml`、`META-INF`、`log4j2.yml` 等明確列出的檔案帶進 Jar；新增
 > profile 時請同步更新 `sourceSets.main.resources` 的 include 設定。
@@ -235,7 +235,6 @@ curl http://localhost:8081/actuator/health
 - `SecurityConfig` 目前以雙 Security Filter Chain（Swagger 放行 + Flowable REST Basic Auth/Stateless）為基礎，若要串接企業 IAM
   仍需在 `web` 模組新增 OAuth2/JWT Filter 並調整兩條 chain 的授權範圍。
 - 針對資料庫尚未加入 Flyway/Liquibase，若需要版本化 schema 請新增 migration 工具並於 build pipeline 中擴充步驟。
-- 原 `FLOWABLE_PLATFORM.md` 的 API/監控/請求留存需求已納入本節，建議直接拆為 issue/backlog 管理。
 
 ---
 最後更新：2025-11-19。若未來新增模組或 profile，請同步調整本文件與 `processResources` include 規則。

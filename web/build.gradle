@@ -2,7 +2,6 @@ description = 'flowable'
 
 dependencies {
     implementation libs.bundles.spring.web
-    implementation libs.swagger
 }
 
 bootRun {

@@ -11,10 +11,10 @@ spring:
     import: adapter.yml
   # DataSource
   datasource:
-    url: jdbc:oracle:thin:@127.0.0.1:1521/ORCLCDB
-    username: FLOWTESTDB
-    password: flowtest123
-    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@172.17.24.72:1521:ORCL
+    username: POCFLOWABLE
+    password: fsapadm123
+    driverClassName: oracle.jdbc.OracleDriver
 
   # JPA
   jpa:
@@ -26,3 +26,10 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: true
+
+# Spring Doc 正式環境請關閉
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

@@ -7,6 +7,9 @@ dependencies {
     //runtimeOnly(libs.h2.database)
     runtimeOnly(libs.oracle.jdbc.driver)
 
+    // Spring Doc
+    implementation libs.swagger
+
     // 測試依賴
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.junit.jupiter)
