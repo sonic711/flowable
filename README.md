@@ -1,6 +1,6 @@
 # Flowable 平台程式與架構說明
 
-本文件同步 `fsap/poc/flowable` 目前的程式碼（develop 分支，HEAD `8f6ffef`，2025-11-20），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。所有內容均可由
+本文件同步 `flowable` 目前的程式碼（develop 分支，HEAD `2151a03b`，2025-11-20），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。所有內容均可由
 Git 操作記錄、現況程式碼與 Gradle 設定交叉驗證。
 
 ## 1. 專案概覽
@@ -30,13 +30,13 @@ Git 操作記錄、現況程式碼與 Gradle 設定交叉驗證。
 
 ## 3. Git 狀態與近期提交
 
-| Commit    | 日期         | 重點                                                                  |
-|-----------|------------|---------------------------------------------------------------------|
-| `8f6ffef` | 2025-11-20 | 新增 Flowable Swagger/OpenAPI 群組、調整本地/DEV application.yml 並更新 README。 |
-| `3c9b8c7` | 2025-11-19 | README 大幅改寫、移除舊 `FLOWABLE_PLATFORM.md`、調整安全設定與版本定義。                 |
-| `990faa0` | 2025-11-19 | 強化 Basic Auth：雙 SecurityFilterChain、Unauthorized JSON 訊息。           |
-| `d7ea4bc` | 2025-11-19 | Undertow YAML 調整（local / dev profile）。                              |
-| `9b16b71` | 2025-11-19 | 導入 `RequestResponseLoggingFilter`、新增 Undertow config、擴充 log4j2 設定。  |
+| Commit     | 日期         | 重點                                                                  |
+|------------|------------|---------------------------------------------------------------------|
+| `2151a03b` | 2025-11-20 | 新增 Flowable Swagger/OpenAPI 群組、調整本地/DEV application.yml 並更新 README。 |
+| `3c9b8c7`  | 2025-11-19 | README 大幅改寫、移除舊 `FLOWABLE_PLATFORM.md`、調整安全設定與版本定義。                 |
+| `990faa0`  | 2025-11-19 | 強化 Basic Auth：雙 SecurityFilterChain、Unauthorized JSON 訊息。           |
+| `d7ea4bc`  | 2025-11-19 | Undertow YAML 調整（local / dev profile）。                              |
+| `9b16b71`  | 2025-11-19 | 導入 `RequestResponseLoggingFilter`、新增 Undertow config、擴充 log4j2 設定。  |
 
 > 版本資訊由 `com.gorylenko.git-properties` + `gradle/version-info.gradle` 寫入 `BOOT-INF/classes/git.properties` 與
 `application-info.yml`，Jenkins 也會在 `application-info.yml` 補入 `buildNumber / apiVersion`，方便 trace。
