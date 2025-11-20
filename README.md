@@ -1,240 +1,226 @@
 # Flowable 平台程式與架構說明
 
-本文件同步 `fsap/poc/flowable` 目前的程式碼（HEAD `996499cc`，develop 分支），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。
-的產品願景與長期需求已併入第 11 節，方便集中維護。
+本文件同步 `fsap/poc/flowable` 目前的程式碼（develop 分支，HEAD `8f6ffef`，2025-11-20），以便快速理解模組拆分、關鍵元件、建置鏈與操作流程。所有內容均可由
+Git 操作記錄、現況程式碼與 Gradle 設定交叉驗證。
 
 ## 1. 專案概覽
 
-- **目標**：將 Flowable 7.2.0 的 Engine、REST、IDM 組件包裝成可控的 API 平台，整合既有的 BT 基礎設施（監控、Eureka、Bridge
+- **目標**：將 Flowable 7.2.0（Engine、REST、IDM）包裝成可控的 API 平台，並串接 BT 既有元件（監控、Eureka、Bridge
   Dispatcher、Logging）。
-- **架構**：Gradle multi-module 專案，核心模組為 `boot:flowable`（可執行 Jar）、`web`（HTTP/安全配件）、`flowable-process`
-  （流程引擎與資料層）。
-- **執行環境**：Java 21、Spring Boot 3.5.6、Undertow 容器、Oracle DB（預設透過 thin driver 連線）。
-- **部署型態**：本機可 `bootRun`，Jenkins pipeline 可建置/掃描/遠端部署，`gradle/deploy` 內建 SSH 自動化（DEV server 初始設定）。
+- **模組**：Gradle multi-module，包含 `boot:flowable`（可執行 Jar 與配置打包）、`web`（HTTP / 安全 / 日誌配件）、
+  `flowable-process`（流程引擎與資料層）。
+- **執行環境**：Java 21（toolchain）、Spring Boot 3.5.6、Undertow 2.3.19.Final、Oracle DB（thin driver，HikariCP）。
+- **部署模式**：本機使用 `bootRun` 與 `-Denv=<profile>`；Jenkins pipeline 觸發
+  `build / check / dependency-check / sonar / deploy`；`gradle/deploy` 內建 SSH 自動化推送至 DEV（172.17.24.79，flowuser）。
+- **觀測性**：Log4j2 YAML 定義 Application / JMS / LOG-AGENT / HTTP-EXCHANGE 多個 appenders，Actuator 全開放，Undertow
+  tuning 與 access log 皆以 YAML 管理。
 
 ## 2. 技術棧與版本
 
-| 類別         | 套件 / 版本                                              | 說明                                                                                         |
-|------------|------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| 語言/框架      | Java 21、Spring Boot 3.5.6                            | `gradle/libs.versions.toml` 由 toolchain 鎖定 JDK，並使用 Spring Dependency Management 插件。        |
-| BPM/工作流    | Flowable 7.2.0                                       | 透過 `flowable-spring-boot-starter` + REST/Actuator starter 整合。                              |
-| Web Server | Undertow 2.3.19.Final                                | 於 `boot:flowable` 引入，並排除 Spring Boot 預設 Tomcat。                                            |
-| API 文件     | Springdoc OpenAPI 2.8.14 + Swagger UI                | `web` 模組新增 `libs.swagger`，自動產生 `/v3/api-docs` 與 `/swagger-ui/**` 以便檢視 Flowable REST。       |
-| 日誌         | Log4j2 2.25.1 + 自訂 logging.gradle                    | 所有模組排除 `spring-boot-starter-logging`，集中於 `boot/flowable/src/main/resources/log4j2.yml` 管理。 |
-| 企業依賴       | `com.bot:fsap-*`                                     | 由 `libs.bundles.blue.tech.bundle` 提供 Dispatcher Client、監控插件等。                              |
-| 檢測掃描       | SpotBugs、Checkstyle、OWASP Dependency Check、SonarQube | 已於 root `build.gradle` 及 `gradle/*` 中預設。                                                   |
+| 類別         | 版本 / 套件                                                       | 說明                                                                                                               |
+|------------|---------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| 語言 / 框架    | Java 21、Spring Boot 3.5.6、Spring Dependency Management 1.1.7  | `java` toolchain 鎖定 JDK，所有子專案預設 `java-library` + `org.springframework.boot` + `io.spring.dependency-management`。 |
+| BPM / 工作流  | Flowable 7.2.0                                                | `flowable-process` 實作 Engine、REST、Actuator starter，並自訂 Swagger/OpenAPI。                                          |
+| Web Server | Undertow 2.3.19.Final                                         | 取代 Tomcat，`application-undertow.yml` 描述 buffer、thread、access log 等 tuning。                                       |
+| API 文件     | Springdoc OpenAPI 2.8.14 + Swagger UI                         | Flowable REST API 依 `FlowableSwaggerConfig` 拆多組 `GroupedOpenApi`，且統一 basicAuth scheme。                           |
+| 日誌         | Log4j2 2.25.1、SLF4J 2.0.17、自訂 `gradle/logging/logging.gradle` | 排除 `spring-boot-starter-logging`，集中於 `boot/flowable/src/main/resources/log4j2.yml`。                              |
+| 資料庫        | Oracle JDBC (`ojdbc11`)、HikariCP                              | `DataSourceConfiguration` 以 `spring.datasource.*` 參數建連線池，預設 pool 50。                                             |
+| 企業依賴       | `com.bot:fsap-*`、Dispatcher/Monitor/Bridge                    | 由 `libs.bundles.blue.tech.bundle` 引入企業內控元件與監控插件。                                                                 |
+| 檢測         | SpotBugs、Checkstyle、OWASP Dependency Check、SonarQube          | 於 root `build.gradle` 及 `gradle/*` script 預設，搭配 Jenkins `Code Analysis / OWASP / Sonar` stage。                   |
 
 ## 3. Git 狀態與近期提交
 
-| Commit    | 日期         | 重點                                                       |
-|-----------|------------|----------------------------------------------------------|
-| `990faa0` | 2025-11-19 | 調整 Basic Auth + 驗證失敗 JSON 回應（`web` 模組 `SecurityConfig`）。 |
-| `d7ea4bc` | 2025-11-19 | 調整 Undertow 相關設定 (`application-undertow.yml`)。           |
-| `9b16b71` | 2025-11-19 | 導入 HTTP Request/Response logging filter。                 |
-| `f048d5f` | 2025-11-19 | 專案改用 Undertow 以符合無阻塞需求。                                  |
-| `7b6000d` | 2025-11-18 | SonarQube 設定調整。                                          |
+| Commit    | 日期         | 重點                                                                  |
+|-----------|------------|---------------------------------------------------------------------|
+| `8f6ffef` | 2025-11-20 | 新增 Flowable Swagger/OpenAPI 群組、調整本地/DEV application.yml 並更新 README。 |
+| `3c9b8c7` | 2025-11-19 | README 大幅改寫、移除舊 `FLOWABLE_PLATFORM.md`、調整安全設定與版本定義。                 |
+| `990faa0` | 2025-11-19 | 強化 Basic Auth：雙 SecurityFilterChain、Unauthorized JSON 訊息。           |
+| `d7ea4bc` | 2025-11-19 | Undertow YAML 調整（local / dev profile）。                              |
+| `9b16b71` | 2025-11-19 | 導入 `RequestResponseLoggingFilter`、新增 Undertow config、擴充 log4j2 設定。  |
 
-> Jenkins pipeline 及 `gradle/version-info.gradle` 會將 Git 版本資訊寫入 `application-info.yml` 與 `git.properties`，方便
-> Trace。
+> 版本資訊由 `com.gorylenko.git-properties` + `gradle/version-info.gradle` 寫入 `BOOT-INF/classes/git.properties` 與
+`application-info.yml`，Jenkins 也會在 `application-info.yml` 補入 `buildNumber / apiVersion`，方便 trace。
 
 ## 4. 目錄與模組速覽
 
 ```
 flowable/
 ├── boot
-│   ├── build.gradle            # 聚合子模組、設定 bootJar 名稱
-│   └── flowable                # 可執行模組 (BootApplication + 資源)
-├── flowable-process            # Flowable Engine/資料層
-├── web                         # HTTP/安全/記錄
-├── gradle                      # 共用 script：logging、deploy、scan、publish…
-├── Jenkinsfile                 # CI/CD pipeline
-└── README.md                   # 本文件
+│   ├── build.gradle               # 聚合子模組、log/deploy 設定
+│   └── flowable
+│       ├── src/main/java/com/bot/fsap/flowable/BootApplication.java
+│       └── src/main/resources
+│           ├── application-*.yml  # actuator / undertow / info
+│           ├── config/{local,dev,sit,uat,prod}/(application|adapter|application-eureka).yml
+│           └── log4j2.yml
+├── flowable-process              # Flowable Engine、REST、BPMN
+├── web                           # Security、Logging Filter
+├── gradle                        # 共用 script（logging、deploy、spotbugs...）
+├── Jenkinsfile                   # CI/CD pipeline
+└── README.md
 ```
 
-`settings.gradle` 指定 `include 'web', 'boot:flowable', 'flowable-process'`；根專案 jar/bootJar 關閉，僅子模組產出工件。
+`settings.gradle` 僅包含 `include 'web', 'boot:flowable', 'flowable-process'`；root module 關閉 `jar`/`bootJar`
+，確保只有子模組產出工件。
 
 ## 5. 建置鏈與自動化
 
-### 5.1 Gradle 與版本管理
+### 5.1 Gradle 設定
 
-- `gradle/libs.versions.toml` 定義套件/插件版本與 bundle（Spring、Flowable、Undertow、BlueTech、logging 等）。
-- 所有子專案自動套用：`java-library`、`org.springframework.boot`、`io.spring.dependency-management`、
-  `com.gorylenko.git-properties`。
-- root `build.gradle` 額外引入：
-    - `gradle/logging/logging.gradle`：集中 log4j2/slf4j 依賴並排除 logback。
-    - `gradle/dependency-check/*`、`gradle/spotbugs/*`、`gradle/checkstyle/*`：統一掃描規則。
-    - `gradle/publish/*`、`gradle/version-info.gradle`：打包 metadata、版本資訊、`application-info.yml` token 取代。
+- `gradle/libs.versions.toml` 定義所有版本與 bundles（Spring、Flowable、Undertow、BlueTech、logging、swagger、jackson）。
+- root `build.gradle`：
+    - `buildscript` 引入 Dependency Check、Sonar、SpotBugs、License Report、git-properties、SSH plugin。
+    - `allprojects` 預設 `project-report`、`com.github.jk1.dependency-license-report`，產出多種格式的第三方授權報告。
+    - `subprojects` 套用 `spotbugs/checkstyle/publish/version-info/dependency-check` 等 script，並要求透過 Nexus
+      repository 解析企業 artifact。
+- `boot/flowable/build.gradle`：
+    - 引入 `gradle/logging/logging.gradle`（集中 log4j2/SLF4J 依賴），`gradle/deploy/deploy.gradle`（SSH 與遠端操作）。
+    - `processResources` 針對 `*.yml/*.properties` 執行 `ReplaceTokens`，只會把白名單資源帶入 Jar，並依 `-Denv` 將
+      `config/<profile>` 內容佈到輸出目錄。
 
-### 5.2 Jenkins pipeline (`Jenkinsfile`)
-
-- 互動參數：環境 (`env`)、要建置的 project、是否進行 assemble/test report/code analysis/OWASP/Sonar/put files/remote start
-  等。
-- Stages：
-    1. `Apply Parameters`：根據 UI 或 pipeline 預設建立參數。
-    2. `Checkout Source`：SCM checkout、列印環境變數。
-    3. `Assemble Artifact`：`./gradlew ${project}:build -x test`（可選 offline）。
-    4. `Test Report`：`./gradlew test` 並收集 `**/build/test-results`。
-    5. `Code Analysis`：產出 Gradle report、Licence report、Checkstyle/SpotBugs HTML。
-    6. `OWASP Analysis`、`Sonar Analysis`：條件式執行。
-    7. `Put Files`：呼叫 `gradle/deploy/deploy.gradle`，上傳 `application*.yml`、`log4j2`、`flowable.jar` 至 remote。
-    8. `Remote Start/Stop`：支援 `Apply_New_Version`、`Restart`、`Rollback` 模式。
-
-### 5.3 Deploy Script (`gradle/deploy/deploy.gradle`)
-
-- 使用 `org.hidetake.ssh` 插件；內建 DEV server 範例（`flowuser@172.17.24.79`）。
-- 任務：
-    - `sshInfo`：顯示 deploy 用私鑰路徑。
-    - `put_files`：依環境將 `application.yml / adapter.yml / application-eureka.yml / log4j2.yml / bootJar` 置於遠端
-      `app_home`；並維護 `.env`、`jmh.env` 內容。
-    - `remote_start` / `remote_stop`：透過 `bin_home` 腳本起停服務，並保留 N 個版本。
-- 相關屬性可由 `-Denv=<dev|sit|uat>`、`-Dinclude_remotes`、`-Dexclude_remotes` 控制。
-
-## 6. 模組詳解
-
-### 6.1 `boot:flowable`
-
-- **啟動類別**：`com.bot.fsap.flowable.BootApplication` (`boot/flowable/src/main/java/.../BootApplication.java`) 以
-  `@ComponentScan("com.bot")` 掃描其餘模組 Bean。
-- **gradle 設定**：
-    - `bootJar` 產出 `flowable.jar`，mainClass 設為 `com.bot.fsap.flowable.BootApplication`。
-    - `processResources` 會依 `-Denv=<profile>` 或 `-Pprofile` 取代 `application*.yml` 中的 token（
-      `@spring.active.profiles@` 等），並把對應 profile 的設定複製到輸出目錄。
-    - `bootRun` 預設 JVM 參數 `-Xms512m -Xmx2048m`、`-Dlog4j.skipJansi=false`、`-DBASE_PATH=$HOME/app/fsap/log`、
-      `-Dlogging.config=.../log4j2.yml`。
-    - 子模組 `configurations` 排除 `spring-boot-starter-tomcat`，改由 Undertow (`libs.bundles.undertow`) 提供容器。
-- **資源**：
-    - `config/<profile>/application.yml`：指定資料庫、profiles include (`eureka, actuator, info, flowable, undertow`)、
-      `server.port=8081`。
-    - `config/<profile>/adapter.yml`：Bridge Dispatcher/nebula adapter 靜態 hosts 列表。
-    - `config/<profile>/application-eureka.yml`：Eureka 註冊/心跳設定，metadata 包含 `gRPCPort`。
-    - `application-actuator.yml`：暴露所有 Actuator endpoint、健康檢查細節。
-    - `application-info.yml`：由 `processResources` + `gradle/version-info.gradle` 注入 build/githash。
-    - `application-undertow.yml`：細緻控制 buffer、threads、max-post-size、access log 格式等。
-    - `log4j2.yml`：定義 Console、Application、JMS、Log-agent、HTTP exchange 等 appender。
-    - `META-INF/spring.factories`：暴露必要的 AutoConfiguration（沿用企業共用設定）。
-
-### 6.2 `web`
-
-- **定位**：不可獨立啟動（`bootRun=false`、`bootJar=false`），作為 `boot` 的 HTTP adapter。
-- **安全機制**（`web/src/main/java/com/bot/fsap/flowable/web/security/SecurityConfig.java`）：
-    - `@Order(1)` 的 `swaggerFilterChain` 以 `securityMatcher("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-      "/swagger-resources/**", "/webjars/**")` 放行所有 Swagger 資源，只停用 CSRF，並保留 Undertow 預設 session 行為，確保
-      Swagger UI 載入時不會被 Stateless 限制擋下。
-    - `@Order(2)` 的 `apiFilterChain` 負責 Flowable REST/IDM：關閉 CSRF/FormLogin、啟用 HTTP Basic、SessionPolicy 設為
-      `STATELESS`，並維持結構化 JSON 的 `authenticationEntryPoint`（timestamp/status/message/path）。
-- **API 文件**：`web/build.gradle` 引入 `libs.swagger`（`springdoc-openapi-starter-webmvc-ui` 2.8.14），可於
-  `http://localhost:8081/swagger-ui/index.html` 檢視 `/flowable-rest/**` 模型。`swaggerFilterChain` 放行文件端點，其餘 API
-  仍需 Basic Auth。
-- **請求/回應紀錄**（`web/.../logging/RequestResponseLoggingFilter.java`）：
-    - `OncePerRequestFilter` 包裝 `ContentCachingRequest/ResponseWrapper`，建立 `X-Request-Id`，並以 logger
-      `HttpExchangeLogger` 列印 method/URI/status/耗時/headers/params/payload。
-    - 敏感 header（Authorization/Cookie/X-API-Key 等）以 `***masked***` 取代，payload 超過 16KB 會截斷。
-    - 對應 `log4j2.yml` 的 `HTTP-EXCHANGE` rolling file，方便稽核。
-
-### 6.3 `flowable-process`
-
-- **資料來源**（`DataSourceConfiguration`）：使用 HikariCP，連線池大小 50、最少閒置 5、Idle 600s、MaxLifetime 1800s，參數由
-  `spring.datasource.*` 取得（可透過 JVM system properties 覆寫）。
-- **流程引擎**（`ProcessEngineConfiguration`）：實作 `EngineConfigurationConfigurer<SpringProcessEngineConfiguration>`，基於
-  `application-flowable.yml` 注入 `database-schema-update`、`async-executor-activate`、`history-level`，並記錄 log。
-- **流程部署**（`ProcessDeploymentConfiguration`）：
-    - 只在 `dev`、`prod` profile 啟動（`@Profile`).
-    - CommandLineRunner 啟動時掃描 `classpath:/processes/simple.bpmn20.xml`。
-    - 若 `simpleProcess` 未部署則執行 `RepositoryService.createDeployment()`，完成後列出所有流程版本；在測試環境（偵測
-      `org.springframework.test.context.TestContext`）不拋例外以避免測試失敗。
-- **IDM 管理者**（`AdminUserInitializer`）：啟動後建立 `flowable.admin.users`（預設 `rest-admin, admin`）帳號，給予
-  `access-admin/task/modeler/rest-api` 權限並以 `flowable.admin.default-pw`（預設 `test`）設密碼。
-- **資源**：
-    - `application-flowable.yml`：Flowable schema、async executor、history level、REST/IDM 開關、預設管理者清單。
-    - `processes/simple.bpmn20.xml`：示範流程（開始→使用者任務→結束），附帶 form properties，方便驗證部署。
-
-## 7. 組態檔一覽
-
-| 檔案                                                                         | 內容重點                                                                                                                        |
-|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `boot/flowable/src/main/resources/config/<profile>/application.yml`        | Profiles include (`eureka,actuator,info,flowable,undertow`)、Oracle datasource、JPA 設定、`server.port=8081`。                    |
-| `boot/flowable/src/main/resources/config/<profile>/adapter.yml`            | BT Bridge Dispatcher/nebula adapter 參數及靜態 host 列表。                                                                          |
-| `boot/flowable/src/main/resources/config/<profile>/application-eureka.yml` | Eureka 註冊、心跳、metadata，將 `grpc.server.port` 透過 metadata 對外暴露。                                                                |
-| `boot/flowable/src/main/resources/application-actuator.yml`                | Actuator endpoint 曝光、健康檢查細節、管理權限。                                                                                           |
-| `boot/flowable/src/main/resources/application-info.yml`                    | 由 Token 置換輸出 build number、gitRevision、gitBranch、version 等。                                                                  |
-| `boot/flowable/src/main/resources/application-undertow.yml`                | Buffer/Thread/Timeout/access log 設定，確保 Undertow tuning 可被 profile include。                                                  |
-| `boot/flowable/src/main/resources/log4j2.yml`                              | Console/Application/JMS/Log-agent/HTTP exchange appender，`BASE_PATH` 預設 `/Users/sonic711/app/fsap/log`，可用 `-DBASE_PATH` 覆蓋。 |
-| `flowable-process/src/main/resources/application-flowable.yml`             | Flowable schema、async executor、history level、REST/IDM、admin user/default pw。                                                |
-| `flowable-process/src/main/resources/processes/simple.bpmn20.xml`          | 範例 BPMN，提供表單欄位與中文說明。                                                                                                        |
-
-> `boot` 模組的 `processResources` 只會把 `application*.yml`、`META-INF`、`log4j2.yml` 等明確列出的檔案帶進 Jar；新增
-> profile 時請同步更新 `sourceSets.main.resources` 的 include 設定。
-
-## 8. Flowable 執行路徑與 REST 介面
-
-1. 使用 `./gradlew :boot:flowable:bootRun -Denv=local` 或 `java -Denv=dev -jar boot/flowable/build/libs/flowable.jar`
-   啟動。
-2. Spring Boot 讀取 `application.yml`（依 env 決定 profile），再 include `info`、`flowable` 等子組態。
-3. `web` 模組載入 Security Filter Chain 與 Request/Response Logging Filter。
-4. `flowable-process` 建置 DataSource → ProcessEngine → Flowable REST (`/flowable-rest/**`) 與 IDM。
-5. `AdminUserInitializer` 確保 `rest-admin/test` (及 `admin/test`) 存在，支援 Flowable REST Basic Auth。
-6. `ProcessDeploymentConfiguration` (dev/prod) 自動部署 `simpleProcess` 並列出部署資訊。
-7. Actuator `/actuator/**` 與 Eureka 註冊將由 `boot` 模組管理；log4j2 使用 `BASE_PATH` 分隔主機上的 log 目錄。
-
-常用驗證指令：
+### 5.2 常用指令
 
 ```bash
-# 啟動（local profile，覆寫 Oracle 連線）
+# 建置全部子模組並產生授權資訊
+./gradlew clean build
+
+# 啟動 Flowable（local profile，若要覆寫 Oracle 連線可帶下述參數）
 ./gradlew :boot:flowable:bootRun -Denv=local \
   -Dspring.datasource.url=jdbc:oracle:thin:@127.0.0.1:1521/ORCLCDB \
   -Dspring.datasource.username=FLOWTESTDB \
   -Dspring.datasource.password=flowtest123
 
-# 查詢 Flowable 流程定義
-curl -u rest-admin:test \
-  http://localhost:8081/flowable-rest/service/repository/process-definitions
+# 產出可部署 Jar
+./gradlew :boot:flowable:bootJar
 
-# Actuator 健康檢查
-curl http://localhost:8081/actuator/health
+# 靜態檢查 / 掃描
+./gradlew check :projectReport :generateLicenseReport
+./gradlew dependencyCheckAnalyze
+./gradlew sonar --info -Dsonar.login=<token>
 ```
 
-- Swagger 文件：瀏覽 `http://localhost:8081/swagger-ui/index.html` 或 `/v3/api-docs`，其路徑由 `swaggerFilterChain` 放行，方便檢視 Flowable REST 模型，其餘 API 仍需 Basic Auth。
+### 5.3 Jenkins 與 Deploy
 
-## 9. Logging、監控與觀察性
+- Jenkins pipeline stages：
+  `Apply Parameters → Checkout Source → Assemble Artifact → Test Report → Code Analysis → OWASP Analysis → Sonar Analysis → Put Files → Remote Start → Remote Stop`。
+- 參數化項目（`env / gradle_project / include|exclude_remotes / is_*` toggles / remote_start_mode / rollback version /
+  is_offline / Jenkins JDK tool...）直接影響 gradle 指令與 deploy script。
+- `gradle/deploy/deploy.gradle` 透過 `org.hidetake.ssh`：
+    - 目前僅定義 DEV server（`flowuser@172.17.24.79`，安裝於 `/app/fsap/flowable`）。
+    - `put_files` 會上傳 `config/<env>` 的 `application.yml`、`adapter.yml`、`application-eureka.yml`、`log4j2.yml` 以及
+      `bootJar`，並維護遠端 `.env`（`JAVA_HOME`、`SPRING_CONFIG_ADDITIONAL_LOCATION`、`FLOWABLE_SCHEMA`...）。
+    - `remote_start` / `remote_stop` 依 `remote_start_mode` 執行 apply new / restart / rollback，並保留歷史版本。
 
-- **HTTP 交換 Log**：`RequestResponseLoggingFilter` 將資訊寫至 logger `HttpExchangeLogger`；`log4j2.yml` 的
-  `HTTP-EXCHANGE` RollingFile 會以天/小時切割。
-- **應用核心 Log**：`APPLICATION` appender 輸出 `${BASE_PATH}/${APPLICATION_NAME}_application.log`，保留 30 天，並支援
-  `LOG4J2_DISABLE_ANSI` 控制彩色輸出；若未指定 `BASE_PATH`，預設使用 `/Users/sonic711/app/fsap/log`。
-- **JMS/Log-agent**：對應 `JmsSysInfoLogger`、`LOG-AGENT` appender，符合 BT 監控 agent 需求。
-- **Actuator**：`application-actuator.yml` 將所有 endpoint (`*`) 暴露，`health.show-details=ALWAYS`，方便監控平台收集資訊。
-- **Eureka**：`application-eureka.yml` 預設 `registerWithEureka=false`，如需註冊請調整 `registerWithEureka`、`serviceUrl`
-  並於 `processResources` include。metadata 中可附加 gRPC port 等客製資訊。
+## 6. Flowable 模組細節 (`flowable-process`)
 
-## 10. 建置 / 測試 / 發布流程
+### 6.1 DataSource 與引擎配置
 
-1. **初始化**：`./gradlew --version`（會下載 wrapper 相依）。
-2. **檢查/建置**：
+- `DataSourceConfiguration` 以 `HikariDataSource` 建立 Oracle 連線池（最大 50 連線、最小 5、Idle 10 分鐘、MaxLifetime 30
+  分鐘）。
+- `application-flowable.yml`：
+    - `flowable.database-schema-update=true`、`database-schema=${FLOWABLE_SCHEMA:POCFLOWABLE}`，可透過環境參數覆寫 schema。
+    - 啟用 async executor、history level `full`、REST API、IDM（預設密碼編碼 `spring_delegating_noop`）。
+    - `admin.users=rest-admin,admin`、`default-pw=test`。
+- `ProcessEngineConfiguration` 透過 `EngineConfigurationConfigurer` 設定 schema update / async executor / history
+  level，並寫 log 在啟動時確認。
+
+### 6.2 管理者帳號初始化
+
+- `AdminUserInitializer`（`ApplicationRunner`）確保 `flowable.admin.users` 中的帳號存在，沒有則建立（Email `@flowable.local`
+  、預設密碼 `flowable.admin.default-pw`）。
+- 權限：自動建立 `access-admin`、`access-task`、`access-modeler`、`access-rest-api` privilege，並為使用者綁定，避免 REST 認證失敗。
+
+### 6.3 流程部署
+
+- `ProcessDeploymentConfiguration` 只在 `dev/prod` profile 啟用：
+    - 讀取 `classpath:/processes/simple.bpmn20.xml`，若 `simpleProcess` 尚未部署則新增 Deployment 並記錄 deploymentId。
+    - 提供 `listDeployedProcesses` 印出目前流程定義清單。
+    - 測試環境（無 `RepositoryService` 或無 Spring Test classpath）會自動跳過，避免 CI/測試失敗。
+- `flowable-process/src/main/resources/processes/simple.bpmn20.xml`：內建示範流程，可作為表單與 REST 驗證。
+
+### 6.4 Flowable Swagger / OpenAPI
+
+- `FlowableSwaggerConfig`：
+    - 宣告 `RestResponseFactory`，掃描 `org.flowable.rest.service.api`，並以 `GroupedOpenApi` 將 Flowable REST 分成
+      Definition / Runtime / History / Management / Identity Group。
+    - 所有 Group 預設加上 `/process-api` 前綴並套用 `basicAuth` security requirement。
+    - 額外提供 `My Application` Group，排除 Flowable 套件，供未來自製 API 使用。
+
+## 7. Web 模組 (`web`)
+
+### 7.1 Security
+
+- `SecurityConfig` 使用雙 `SecurityFilterChain`：
+    1. `swaggerFilterChain`（`@Order(1)`）對 `/v3/api-docs/**`、`/swagger-ui/**`、`/swagger-resources/**`、`/webjars/**`、
+       `/actuator/**` 開放，僅停用 CSRF 與 session 限制。
+    2. `apiFilterChain`（`@Order(2)`）涵蓋其餘 API：禁用 CSRF / form login、啟用 HTTP Basic +
+       `SessionCreationPolicy.STATELESS`，並自訂 401 JSON：
+       ```json
+       {
+         "timestamp": "<ISO-8601>",
+         "status": 401,
+         "error": "Unauthorized",
+         "message": "需要認證才能存取此資源",
+         "path": "<請求路徑>"
+       }
+       ```
+
+### 7.2 HTTP 請求/回應日誌
+
+- `RequestResponseLoggingFilter`（最高優先權 + 10）：
+    - 使用 `ContentCachingRequestWrapper/ResponseWrapper` 擷取 payload，並於 finally block log。
+    - 若上游未提供 `X-Request-Id`，將自動產生並回傳；同時寫入 `HttpExchangeLogger`。
+    - 具備遮罩邏輯（Authorization / Cookie / X-API-Key 等 header 會輸出 `***masked***`）。
+    - Request/Response body 最多 16KB，超過則加上 `(truncated)`；非文字媒體會以 `<binary content>` 表達。
+    - 輸出欄位：method、uri、query、remote addr、principal、status、duration、headers、query params、body、response body。
+    - `log4j2.yml` 中的 `HTTP-EXCHANGE` RollingFile 會儲存在 `${BASE_PATH}/${APPLICATION_NAME}_http_exchange.log`，依小時切割。
+
+## 8. Boot 模組與配置包裝 (`boot:flowable`)
+
+- `BootApplication` 僅 ComponentScan `com.bot`，確保 `web` / `flowable-process` bean 均載入。
+- `processResources` 僅將 `application-actuator.yml`、`application-info.yml`、`application-undertow.yml`、`META-INF/*`、以及對應
+  profile 的 `config/<env>/*.yml` 打包；若新增 profile，請同步調整 include 規則。
+- `config/<env>` 結構：
+    - `application.yml`：server port、profile include、Oracle datasource、JPA、SpringDoc。
+    - `application-eureka.yml`：Eureka 註冊/心跳/metadata (`gRPCPort`)。
+    - `adapter.yml`：Bridge Dispatcher / Nebula adapter 目錄與靜態 hosts。
+- `bootRun` 預設 JVM 參數 `-Xms512m -Xmx2048m`、指定 `log4j2.yml`、並設 `BASE_PATH=$HOME/app/fsap/log`（可藉由
+  `-DBASE_PATH` 覆寫）。
+
+## 9. Logging、Undertow、監控
+
+- `boot/flowable/src/main/resources/log4j2.yml`：
+    - Properties：`BASE_PATH=/Users/sonic711/app/fsap/log`、`APPLICATION_NAME=flowable`。重新部署請改為伺服器路徑。
+    - Appenders：`STDOUT`、`APPLICATION`、`JmsSysInfoLogger`（提供 log-agent 所需格式）、`LOG-AGENT`、`HTTP-EXCHANGE`。
+    - Logger 層級已針對 `com.bot`、`org.springframework.cloud`、`io.grpc` 等常見 namespace 調整，利於排查。
+- `application-actuator.yml`：所有 endpoints (`*`) 採 read-only access，`health.show-details=ALWAYS`，方便監控收集。
+- `application-undertow.yml`：
+    - 調整 buffer-size（16364）、direct-buffers、threads（io=4/worker=128）、socket/server options、access log pattern（JSON
+      格式）；必要時可啟動 access log 並指定 `dir/pattern`。
+    - 支援 `no-request-timeout=-1`（交給客戶端控制超時）與 `record-request-start-time=true`（供 log 分析）。
+- `config/<env>/application-eureka.yml` 預設 `registerWithEureka=false` / `fetchRegistry=false`；若要正式註冊請調整並確保
+  `processResources` 包含對應檔案。
+
+## 10. 執行與驗證
+
+1. 啟動：`./gradlew :boot:flowable:bootRun -Denv=<local|dev|...>`，必要時覆寫 `spring.datasource.*`。
+2. Flowable REST 查詢：
    ```bash
-   ./gradlew clean build          # 子模組產出 jar，root 不產生工件
-   ./gradlew :flowable-process:test --info   # 針對流程模組測試
+   curl -u rest-admin:test \
+     http://localhost:8081/flowable-rest/service/repository/process-definitions
    ```
-3. **靜態檢查**（可在本機觸發與 Jenkins 相同報表）：
-   ```bash
-   ./gradlew check :projectReport :generateLicenseReport
-   ./gradlew dependencyCheckAnalyze
-   ./gradlew sonar --info -Dsonar.login=<token>
-   ```
-4. **封裝/部署**：
-   ```bash
-   ./gradlew :boot:flowable:bootJar
-   ./gradlew -Denv=dev put_files        # 將 jar 與設定推到 DEV server
-   ./gradlew -Denv=dev remote_start     # 遠端啟動 flowable.jar
-   ```
-5. **離線包**：Jenkins 參數 `is_offline=true` 會呼叫 `./gradlew --offline` 產出依賴清單。
+3. Actuator：`curl http://localhost:8081/actuator/health`、`/actuator/info`（會包含 git 與 build metadata）。
+4. Swagger：瀏覽 `http://localhost:8081/swagger-ui/index.html`，Flowable REST group 會顯示 `/process-api/**` 路徑，輸入 `
+   rest-admin/test` 驗證 basic auth。
 
 ## 11. 開發建議與後續工作
 
-- `flowable-process` 目前僅部署單一範例流程，後續若要支援多 BPMN/DMN 建議將部署邏輯改為掃描
-  `classpath*:/processes/**/*.bpmn20.xml`，並建立部署 Metadata 表。
-- `SecurityConfig` 目前以雙 Security Filter Chain（Swagger 放行 + Flowable REST Basic Auth/Stateless）為基礎，若要串接企業 IAM
-  仍需在 `web` 模組新增 OAuth2/JWT Filter 並調整兩條 chain 的授權範圍。
-- 針對資料庫尚未加入 Flyway/Liquibase，若需要版本化 schema 請新增 migration 工具並於 build pipeline 中擴充步驟。
+- `ProcessDeploymentConfiguration` 目前僅部署 `simpleProcess`，若之後要支援多 BPMN / DMN，可改為掃描
+  `classpath*:/processes/**/*.bpmn20.xml` 並加入版本化紀錄。
+- 若需要整合企業 IAM（OAuth2 / JWT），可在 `web` 模組新增對應 Filter，並調整 `SecurityFilterChain` 的授權邏輯以支援複合認證。
+- `flowable-process` 尚未導入 Flyway/Liquibase；若要管理 schema 版本建議新增 migration pipeline，並在 Jenkins 的
+  `Code Analysis` 或 `Assemble` 階段觸發。
+- 遠端部署目前只設定 DEV server，若要擴充 SIT/UAT/PROD，需在 `deploy.gradle` 補上對應 host / env / env_info 設定。
 
 ---
-最後更新：2025-11-19。若未來新增模組或 profile，請同步調整本文件與 `processResources` include 規則。
+最後更新：2025-11-20，請於新增模組或 profile 時同步調整本文件、`processResources` include 規則與 Jenkins/Deploy script。
