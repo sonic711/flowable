@@ -213,7 +213,15 @@ flowable/
 4. Swagger：瀏覽 `http://localhost:8081/swagger-ui/index.html`，Flowable REST group 會顯示 `/process-api/**` 路徑，輸入 `
    rest-admin/test` 驗證 basic auth。
 
-## 11. 開發建議與後續工作
+## 11. Swagger 頁面使用說明
+
+1. **開啟頁面**：啟動應用後，瀏覽 `http://localhost:8081/swagger-ui/index.html`（或部署環境的 `:8081` 連線埠）。頁面載入時會自動列出 Flowable 與自訂 API 的 group。
+2. **切換 Flowable 群組**：右上角的下拉選單會出現 `Flowable-Definition`、`Flowable-Runtime`、`Flowable-History`、`Flowable-Management`、`Flowable-Identity` 與 `My Application` 等 group，對應 `FlowableSwaggerConfig` 內定義的 `GroupedOpenApi`。Flowable 群組已自動加上 `/process-api` 前綴，URI 會以 `/process-api/<flowable-path>` 呈現。
+3. **授權認證**：按 `Authorize`，在 basic auth 視窗輸入 `rest-admin` / `test`（或 `application-flowable.yml` 中的自訂帳號）。授權成功後同一瀏覽器會共用 Authorization header，Swagger 上帶鎖的 API 才能執行。
+4. **呼叫 API**：展開任一 operation 後點選 `Try it out`，填入必要參數即可送出。`RequestResponseLoggingFilter` 會記錄完整 HTTP exchange，可在 `${BASE_PATH}/flowable_http_exchange.log` 查看請求/回應內容。若要追蹤 Flowable REST 原始端點，可於 `Servers` 欄位看到實際 base URL（`http://localhost:8081/process-api`）。
+5. **自訂應用 API**：`My Application` group 預設排除 `org.flowable.rest.service.api` 相關 package，可放置未來自行開發的 API。若有新增 controller，Swagger 會自動出現在該 group，無須額外設定。
+
+## 12. 開發建議與後續工作
 
 - `ProcessDeploymentConfiguration` 目前僅部署 `simpleProcess`，若之後要支援多 BPMN / DMN，可改為掃描
   `classpath*:/processes/**/*.bpmn20.xml` 並加入版本化紀錄。
