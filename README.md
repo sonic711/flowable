@@ -9,10 +9,10 @@ Git 操作記錄、現況程式碼與 Gradle 設定交叉驗證。
   Dispatcher、Logging）。
 - **模組**：Gradle multi-module，包含 `boot:flowable`（可執行 Jar 與配置打包）、`web`（HTTP / 安全 / 日誌配件）、
   `flowable-process`（流程引擎與資料層）。
-- **執行環境**：Java 21（toolchain）、Spring Boot 3.5.6、Undertow 2.3.19.Final、Oracle DB（thin driver，HikariCP）。
+- **執行環境**：Java 21、Spring Boot 3.5.6、Undertow 2.3.19.Final、Oracle DB（HikariCP）。
 - **部署模式**：本機使用 `bootRun` 與 `-Denv=<profile>`；Jenkins pipeline 觸發
   `build / check / dependency-check / sonar / deploy`；`gradle/deploy` 內建 SSH 自動化推送至 DEV（172.17.24.79，flowuser）。
-- **觀測性**：Log4j2 YAML 定義 Application / JMS / LOG-AGENT / HTTP-EXCHANGE 多個 appenders，Actuator 全開放，Undertow
+- **觀測性**：Log4j2 YAML 定義 Application / JMS / LOG-AGENT / HTTP-EXCHANGE 多個 appends，Actuator，Undertow
   tuning 與 access log 皆以 YAML 管理。
 
 ## 2. 技術棧與版本
@@ -118,8 +118,8 @@ flowable/
 - `DataSourceConfiguration` 以 `HikariDataSource` 建立 Oracle 連線池（最大 50 連線、最小 5、Idle 10 分鐘、MaxLifetime 30
   分鐘）。
 - `application-flowable.yml`：
-    - `flowable.database-schema-update=true`、`database-schema=${FLOWABLE_SCHEMA:POCFLOWABLE}`，可透過環境參數覆寫 schema。
-    - 啟用 async executor、history level `full`、REST API、IDM（預設密碼編碼 `spring_delegating_noop`）。
+    - `flowable.database-schema-update=true`、`database-schema=${spring.datasource.username}`，可透過環境參數覆寫 schema。
+    - 啟用 async executor、history level `full`、REST API、IDM（加密編碼規則 `spring_delegating_noop`）。
     - `admin.users=rest-admin,admin`、`default-pw=test`。
 - `ProcessEngineConfiguration` 透過 `EngineConfigurationConfigurer` 設定 schema update / async executor / history
   level，並寫 log 在啟動時確認。
@@ -132,7 +132,7 @@ flowable/
 
 ### 6.3 流程部署
 
-- `ProcessDeploymentConfiguration` 只在 `dev/prod` profile 啟用：
+- `ProcessDeploymentConfiguration` 只在 `local/dev` profile 啟用：
     - 讀取 `classpath:/processes/simple.bpmn20.xml`，若 `simpleProcess` 尚未部署則新增 Deployment 並記錄 deploymentId。
     - 提供 `listDeployedProcesses` 印出目前流程定義清單。
     - 測試環境（無 `RepositoryService` 或無 Spring Test classpath）會自動跳過，避免 CI/測試失敗。
@@ -190,7 +190,7 @@ flowable/
 ## 9. Logging、Undertow、監控
 
 - `boot/flowable/src/main/resources/log4j2.yml`：
-    - Properties：`BASE_PATH=/Users/sonic711/app/fsap/log`、`APPLICATION_NAME=flowable`。重新部署請改為伺服器路徑。
+    - Properties：`BASE_PATH=/app/fsap/log`、`APPLICATION_NAME=flowable`。重新部署請改為伺服器路徑。
     - Appenders：`STDOUT`、`APPLICATION`、`JmsSysInfoLogger`（提供 log-agent 所需格式）、`LOG-AGENT`、`HTTP-EXCHANGE`。
     - Logger 層級已針對 `com.bot`、`org.springframework.cloud`、`io.grpc` 等常見 namespace 調整，利於排查。
 - `application-actuator.yml`：所有 endpoints (`*`) 採 read-only access，`health.show-details=ALWAYS`，方便監控收集。

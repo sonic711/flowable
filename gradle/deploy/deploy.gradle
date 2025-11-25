@@ -29,7 +29,6 @@ def deploy_remotes = [
                     [only_first_time: false, name: 'BOOTJAR_LOCATION', value: "${server_config.jar_name}"],
                     [only_first_time: false, name: 'SPRING_CONFIG_ADDITIONAL_LOCATION', value: "${server_config.spring_config_filename},${server_config.spring_config_adapter_filename}"],
                     [only_first_time: false, name: 'LOGGING_CONFIG', value: 'log4j2.yml'],
-                    [only_first_time: false, name: 'FLOWABLE_SCHEMA', value: 'POCFLOWABLE'],
                 ]
             },
             put_files: { server_config ->
