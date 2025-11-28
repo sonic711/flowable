@@ -42,7 +42,7 @@ public class SecurityConfig {
 						"/actuator/**")//
 				.csrf(AbstractHttpConfigurer::disable)//
 				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())//
-				// 關鍵：這條 chain 完全不設定 sessionManagement，讓 Undertow 用預設行為（允許 session）
+				// 這條 chain 完全不設定 sessionManagement，讓 Undertow 用預設行為（允許 session）
 				.sessionManagement(AbstractHttpConfigurer::disable);
 
 		return http.build();
@@ -64,9 +64,8 @@ public class SecurityConfig {
 							res.getWriter().write("""
 									{
 									  "timestamp": "%s",
-									  "status": 401,
-									  "error": "Unauthorized",
-									  "message": "需要認證才能存取此資源",
+									  "statusCode": 401,
+									  "errorMessage": "Unauthorized，需要認證才能存取此資源",
 									  "path": "%s"
 									}
 									""".formatted(Instant.now().toString(), req.getRequestURI()));
