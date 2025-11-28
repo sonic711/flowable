@@ -3,6 +3,18 @@
 - 開發環境測試用：[Swagger](http://172.17.24.79:8081/swagger-ui/index.html?urls.primaryName=Flowable-Identity#/user-resource/getUser)
 - 使用說明請參考：[README.md 11.Swagger 頁面使用說明](README.md)
 
+## API 分類快速導覽
+
+- [部署資源（Deployments）](#deployments-api)
+- [流程定義（Process-definition）](#process-definition-api)
+- [流程實例（Process-instance）](#process-instance-api)
+- [執行（Execution）](#execution-api)
+- [任務（Task）](#task-api)
+- [歷史資料（History）](#history-api)
+- [表單（Forms）](#forms-api)
+- [管理（Management）與 Runtime](#management-runtime-api)
+- [身分管理（Identity）](#identity-api)
+
 ## 認證
 
 Flowable REST API，Flowable Engine 會連接至Oracle資料庫。
@@ -204,6 +216,7 @@ GET /runtime/tasks?start=6&size=3
 
 > 除了以上內建類型外，Flowable 還支援 `binary` 與 `serializable` 兩種特殊類型（讀取時會回傳 `valueUrl`）。
 
+<a id="deployments-api"></a>
 ## 部署資源 API
 
 ### Tomcat 使用提醒
@@ -430,6 +443,7 @@ GET /runtime/tasks?start=6&size=3
 - 回應主體會是該資源的二進位內容，`Content-Type` 與資源的 `mimeType` 相同。
 - 會同時設定 `Content-Disposition` header，以便瀏覽器直接下載檔案。
 
+<a id="process-definition-api"></a>
 ## 流程定義 API
 
 ### 查詢流程定義清單
@@ -784,6 +798,7 @@ JSON 參數同「暫停流程定義」。
 }
 ```
 
+<a id="process-instance-api"></a>
 ## 流程實例 API
 
 ### 取得流程實例
@@ -1080,6 +1095,7 @@ JSON 參數同「暫停流程定義」。
 - 表單欄位同上。
 - 回應碼：200 更新成功；400 缺少名稱；404 找不到流程實例或變數；415 無法反序列化。
 
+<a id="execution-api"></a>
 ## 執行（Execution）API
 
 ### 取得單一執行緒
@@ -1266,6 +1282,7 @@ JSON 參數同「暫停流程定義」。
 - 表單欄位同上。
 - 回應碼：200 成功；400 缺欄位；404 找不到執行或變數；415 無法反序列化。
 
+<a id="task-api"></a>
 ## 任務 API
 
 ### 取得指定任務
@@ -1678,6 +1695,7 @@ JSON 參數同「暫停流程定義」。
 
 - 回應碼：204 成功；404 任務或附件不存在。
 
+<a id="history-api"></a>
 ## 歷史資料（History）
 
 ### 歷史流程實例
@@ -2238,6 +2256,7 @@ Request Body 與 `GET` 參數相同，並可加入 `taskVariables`、`processVar
 | 200 | 回傳對應變數的 binary。          |
 | 404 | 找不到 detail、變數不存在或無二進位內容。 |
 
+<a id="forms-api"></a>
 ## 表單（Forms）
 
 ### 取得表單欄位資料
@@ -2348,6 +2367,7 @@ Start Event Form 範例：
 }
 ```
 
+<a id="management-runtime-api"></a>
 ## 管理（Management）與 Runtime
 
 ### 資料表 APIs
@@ -2643,6 +2663,7 @@ Request Body：
 }
 ```
 
+<a id="identity-api"></a>
 ## 身分管理（Identity）
 
 ### 使用者（Users）
@@ -2927,4 +2948,3 @@ Request Body：`{ "userId": "kermit" }`
 |-----|-------------------|
 | 204 | 成功移除。             |
 | 404 | 群組不存在或使用者不是該群組成員。 |
-
