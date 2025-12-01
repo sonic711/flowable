@@ -20,14 +20,6 @@
 - 以傳入的 `API_URL` 輪詢 `curl <URL>/actuator`，最長嘗試 35 次（每 5 秒一次），確認服務已可回應後才視為啟動成功。
 - 若超過嘗試次數仍無法取得成功回應，腳本會回報失敗並退出。
 
-## flow-data/bkup.sh
-- 建立以時間戳命名的 `history/<timestamp>` 目錄，將 `flow-data/xml` 中的所有檔案移入該目錄，保留一份歷史備份。
-- 若 `xml` 目錄內沒有檔案則顯示提示並結束，避免建立空的備份。
-
-## flow-data/readResult.sh
-- 讀取傳入路徑下的 `result.txt` 檔案，取得執行結果字串。
-- 若內容為 `Success` 即回傳 0 供 Jenkins 判定為成功，否則回傳 1 以標記失敗。
-
 # etc/jenkins Jenkinsfile 說明
 
 ## deploy/Jenkinsfile
@@ -36,17 +28,3 @@
 - `Assemble Artifact`、`Test Report`、`Code Analysis`、`OWASP Analysis`、`Sonar Analysis` 分別執行 Gradle 組建、單元測試、靜態掃描、依賴弱掃與 SonarQube，並收集/發佈報表與產物。
 - `Put Files` 依環境與 include/exclude remotes 設定推送成品；後續 `Remote Start`/`Remote Stop` 依啟動模式（Apply New/Restart/Rollback）呼叫 Gradle 任務遠端操作服務。
 - `post` 區段記錄負責人、結果並可串接 Slack，確保每次部署皆有審計訊息。
-
-## publish/Jenkinsfile
-- 針對發佈型專案（預設 `fsap-dispatcher-client`）建置，參數控制是否執行組建、測試、分析、Sonar 與是否僅發佈至 Maven Local。
-- `Checkout Source` 與 deploy 流程類似，用於取得乾淨的程式碼與環境資訊。
-- `Assemble Artifact`、`Test Report`、`Code Analysis`、`OWASP Analysis`、`Sonar Analysis` 的內容與 deploy 版相同，用於確保程式品質。
-- `Release Artifact` 依 `only_publishToMavenLocal` 與 `is_offline` 決定呼叫 `publishToMavenLocal` 或 `publish`，完成本地或遠端倉庫發佈。
-- `post` 區整理建置結果並保留日誌，可選擇推送通知。
-
-## flow-data/Jenkinsfile
-- 針對 flow-data 專案定義參數（環境、Gradle 子專案、同步目標主機、是否同步、離線與 JDK Tool），若非 UI 觸發則在 pipeline 內宣告預設值。
-- `Checkout Source` 在需要時拉取 Git 程式碼並顯示環境資訊，確保同步腳本來源一致。
-- `testAdmAvailable` 會在同步前跑 Gradle 任務確認目標 ADM 主機可用，避免後續流程失敗。
-- `Sync` 執行實際資料同步任務；`BackUp` 在同步後觸發 flow-data 的 `bkup` 任務，把既有資料備份到歷史資料夾。
-- `post` 區提供與其他 Jenkinsfile 一致的結果紀錄與通知鉤子。
