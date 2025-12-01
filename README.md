@@ -44,20 +44,23 @@ Git 操作記錄、現況程式碼與 Gradle 設定交叉驗證。
 ## 4. 目錄與模組速覽
 
 ```
-flowable/
+flowable
+├── etc                   # 非程式碼檔案
+│   ├── boot              # 啟動用Shells
+│   └── swagger           # Swagger UI 使用說明
 ├── boot
-│   ├── build.gradle               # 聚合子模組、log/deploy 設定
 │   └── flowable
-│       ├── src/main/java/com/bot/fsap/flowable/BootApplication.java
-│       └── src/main/resources
+│       ├── src/main/java/com/bot/fsap/flowable/BootApplication.java # 啟動類   
+│       └── src/main/resources # 設定檔
 │           ├── application-*.yml  # actuator / undertow / info
 │           ├── config/{local,dev,sit,uat,prod}/(application|adapter|application-eureka).yml
 │           └── log4j2.yml
 ├── flowable-process              # Flowable Engine、REST、BPMN
 ├── web                           # Security、Logging Filter
-├── gradle                        # 共用 script（logging、deploy、spotbugs...）
+├── gradle                        # 共用 gradle task（logging、deploy、spotbugs...）
 ├── Jenkinsfile                   # CI/CD pipeline
-└── README.md
+├── README.md                     # 本文件
+└── Flowable REST API 原則介紹.md  # Flowable REST API 使用介紹 for Client 
 ```
 
 `settings.gradle` 僅包含 `include 'web', 'boot:flowable', 'flowable-process'`；root module 關閉 `jar`/`bootJar`
