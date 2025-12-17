@@ -62,6 +62,8 @@ public class FlowableSwaggerConfig {
 				""";
 
 		List<Server> servers = List.of(//
+				new Server().url("http://localhost:" + port)//
+						.description("LOCAL，供開發用"),//
 				new Server().url("http://172.17.24.79:" + port)//
 						.description("DEV（flowuser@172.17.24.79:/app/fsap/flowable），供整合測試之用"));
 

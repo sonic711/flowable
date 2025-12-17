@@ -48,6 +48,7 @@ commons-lang3 = "3.18.0"
 blue-tech-dispatcher-client = { module = "com.bot:fsap-dispatcher-client", version.ref = "blue-tech" }
 blue-tech-monitor-plugin = { module = "com.bot:fsap-monitor-plugin", version.ref = "blue-tech" }
 blue-tech-bridge-dispatcher = { module = "com.bot.fsap.wrapper:bridge-dispatcher-support", version.ref = "blue-tech" }
+blue-tech-actuator-security = { module = "com.bot:fsap-actuator-security", version.ref = "blue-tech" }
 blue-tech-model-grpc-common = { module = "com.bot.fsap.model:model-grpc-common", version.ref = "model-grpc-common" }
 
 # Spring Boot 核心
@@ -107,7 +108,7 @@ commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "co
 lombok = { module = "org.projectlombok:lombok" }
 [bundles]
 
-blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin", "blue-tech-bridge-dispatcher", "blue-tech-model-grpc-common"]
+blue-tech-bundle = ["blue-tech-dispatcher-client", "blue-tech-monitor-plugin", "blue-tech-bridge-dispatcher", "blue-tech-model-grpc-common", "blue-tech-actuator-security"]
 
 # Spring Web 相關
 spring-web = ["spring-boot-starter", "spring-boot-starter-web", "spring-boot-starter-actuator", "spring-boot-starter-security"]
